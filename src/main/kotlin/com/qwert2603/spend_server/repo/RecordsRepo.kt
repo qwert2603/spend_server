@@ -21,7 +21,7 @@ interface RecordsRepo {
     fun getRecordsUpdates(lastUpdate: Long, lastUuid: String, count: Int): RecordsUpdates
 
     /** create or update existing records and set "updated" to now. */
-    fun saveRecords(list: List<Record>)
+    fun saveRecords(records: List<Record>)
 
     /** set "deleted" to true and "Record.updated" to now. */
     fun deleteRecords(uuids: List<String>)
