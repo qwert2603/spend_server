@@ -2,6 +2,7 @@ package com.qwert2603.spend_server
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.qwert2603.spend_entity.RecordsDelete
+import com.qwert2603.spend_entity.RecordsSave
 import com.qwert2603.spend_entity.RestContract
 import com.qwert2603.spend_server.db.RemoteDBImpl
 import com.qwert2603.spend_server.repo.RecordsRepo
@@ -68,7 +69,11 @@ fun Application.module() {
             ))
         }
         post(RestContract.ENDPOINT_SAVE_RECORDS) {
-
+            val records = call.receive<RecordsSave>().records
+            if (records.isEmpty()) call.respond(HttpStatusCode.NoContent)
+            if (records.size > SpendServerConst.MAX_RECORDS_TO_SAVE_COUNT) call.respond(HttpStatusCode.BadRequest)
+            recordsRepo.saveRecords(records)
+            call.respond("done")
         }
         delete(RestContract.ENDPOINT_DELETE_RECORDS) {
             val uuids = call.receive<RecordsDelete>().uuids
