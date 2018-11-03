@@ -1,22 +1,3 @@
 Manifest-Version: 1.0
-Class-Path: netty-resolver-4.1.24.Final.jar kotlin-stdlib-common-1.3.0
- .jar jackson-databind-2.9.2.jar netty-codec-4.1.24.Final.jar kotlinx-
- coroutines-jdk8-1.0.0.jar spend_entity-0.3.0.jar kotlin-stdlib-jdk7-1
- .3.0.jar ktor-utils-jvm-1.0.0-beta-3.jar kotlin-reflect-1.3.0.jar net
- ty-buffer-4.1.24.Final.jar config-1.3.1.jar alpn-api-1.1.3.v20160715.
- jar kotlin-stdlib-jdk8-1.3.0.jar jackson-core-2.9.2.jar ktor-http-cio
- -1.0.0-beta-3.jar jackson-module-kotlin-2.9.2.jar netty-codec-http2-4
- .1.24.Final.jar ktor-jackson-1.0.0-beta-3.jar slf4j-api-1.7.25.jar ko
- tlinx-coroutines-core-common-1.0.0.jar kotlinx-io-0.1.0-beta-1.jar po
- stgresql-42.2.5.jar kotlinx-coroutines-io-jvm-0.1.0-beta-1.jar kotlin
- -stdlib-1.3.0.jar ktor-http-jvm-1.0.0-beta-3.jar annotations-13.0.jar
-  kotlinx-coroutines-core-1.0.0.jar kotlinx-io-jvm-0.1.0-beta-1.jar ko
- tlinx-coroutines-io-0.1.0-beta-1.jar atomicfu-common-0.11.12.jar ktor
- -server-host-common-1.0.0-beta-3.jar netty-transport-4.1.24.Final.jar
-  ktor-server-core-1.0.0-beta-3.jar ktor-utils-1.0.0-beta-3.jar netty-
- handler-4.1.24.Final.jar ktor-network-1.0.0-beta-3.jar jackson-annota
- tions-2.9.0.jar ktor-server-netty-1.0.0-beta-3.jar ktor-http-1.0.0-be
- ta-3.jar netty-codec-http-4.1.24.Final.jar netty-common-4.1.24.Final.
- jar
 Main-Class: com.qwert2603.spend_server.AppKt
 
