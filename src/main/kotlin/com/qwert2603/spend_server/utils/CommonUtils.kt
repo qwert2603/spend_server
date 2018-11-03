@@ -14,7 +14,7 @@ fun Int.applyRange(intRange: IntRange) = when {
 }
 
 fun Int.toSqlDate(): java.sql.Date {
-    val year = this / 100 * 100
+    val year = this / (100 * 100)
     val month = this / 100 % 100
     val day = this % 100
     return GregorianCalendar.getInstance()

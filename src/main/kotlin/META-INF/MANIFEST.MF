@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: com.qwert2603.spend_server.AppKt
-
