@@ -1,6 +1,5 @@
 package com.qwert2603.spend_server
 
-import com.qwert2603.spend_entity.Record
 import com.qwert2603.spend_server.db.RemoteDBImpl
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
@@ -25,11 +24,6 @@ fun Application.module() {
         }
     }
     routing {
-        get("/records") {
-            call.respond(listOf(
-                    Record("uuid1", 1, "2018-11-02", "19:18", "fish", 14)
-            ))
-        }
         get("/records_count") {
             call.respond(mapOf("count" to recordsRepo.getRecordsCount()))
         }

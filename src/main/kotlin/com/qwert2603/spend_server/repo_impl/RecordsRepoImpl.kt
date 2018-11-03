@@ -5,6 +5,7 @@ import com.qwert2603.spend_entity.Record
 import com.qwert2603.spend_entity.RecordsUpdates
 import com.qwert2603.spend_server.db.RemoteDB
 import com.qwert2603.spend_server.repo.RecordsRepo
+import com.qwert2603.spend_server.utils.getIntNullable
 
 class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
@@ -36,8 +37,8 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                             Record(
                                     uuid = it.getString("uuid"),
                                     recordTypeId = it.getInt("record_type_id"),
-                                    date = it.getInt("date").toString(),
-                                    time = it.getInt("time").toString(),
+                                    date = it.getInt("date"),
+                                    time = it.getIntNullable("time"),
                                     kind = it.getString("kind"),
                                     value = it.getInt("value")
                             )

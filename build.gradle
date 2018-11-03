@@ -2,7 +2,7 @@ buildscript {
     ext.kotlin_version = '1.3.0'
     ext.ktor_version = '1.0.0-beta-3'
     ext.postgresql_version = '42.2.5'
-    ext.spend_entity_version = '0.1.0'
+    ext.spend_entity_version = '0.2.0'
 
     repositories {
         mavenCentral()
