@@ -14,6 +14,10 @@ object LogUtils {
         e("AASSDD", msg)
     }
 
+    fun e(t: Throwable) {
+        t.printStackTrace()
+    }
+
     fun e(tag: String, msg: String) {
         System.err.println("$tag $msg")
     }

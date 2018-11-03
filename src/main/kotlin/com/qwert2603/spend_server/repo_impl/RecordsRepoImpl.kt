@@ -53,7 +53,14 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     }
 
     override fun deleteRecords(uuids: List<String>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val sb = StringBuilder("""
+            UPDATE records
+            SET deleted = TRUE, updated = extract(EPOCH FROM now()) * 1000
+            WHERE uuid IN (
+            """)
+        repeat(uuids.size) { sb.append("?,") }
+        sb[sb.lastIndex] = ')' // replace ',' to ')'.
+        remoteDB.execute(sql = sb.toString(), args = uuids)
     }
 
     override fun getRecordsCount(): Int {
