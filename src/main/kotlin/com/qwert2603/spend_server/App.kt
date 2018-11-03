@@ -44,9 +44,13 @@ fun Application.module() {
         }
     }
     routing {
+        get("get_500") { throw Exception("500 done!") }
+        get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
+
         get("/records_count") {
             call.respond(mapOf("count" to recordsRepo.getRecordsCount()))
         }
+
         get("/get_records_updates") {
             val receiveParameters = call.request.queryParameters
             call.respond(recordsRepo.getRecordsUpdates(
@@ -68,8 +72,6 @@ fun Application.module() {
             recordsRepo.deleteRecords(uuids)
             call.respond(HttpStatusCode.NoContent)
         }
-        get("get_500") { throw Exception("500 done!") }
-        get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
     }
 }
 
