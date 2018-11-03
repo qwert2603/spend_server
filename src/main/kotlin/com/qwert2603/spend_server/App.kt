@@ -1,26 +1,25 @@
 package com.qwert2603.spend_server
 
+import com.qwert2603.spend_entity.Record
 import com.qwert2603.spend_server.db.RemoteDBImpl
-import com.qwert2603.spend_server.entity.PostI
-import com.qwert2603.spend_server.entity.Record
-import com.qwert2603.spend_server.repo.IntRepo
 import com.qwert2603.spend_server.repo.RecordsRepo
-import com.qwert2603.spend_server.repo_impl.IntRepoImpl
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
-import io.ktor.application.*
-import io.ktor.features.*
-import io.ktor.jackson.*
-import io.ktor.request.receive
-import io.ktor.response.*
-import io.ktor.routing.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
+import io.ktor.application.Application
+import io.ktor.application.call
+import io.ktor.application.install
+import io.ktor.features.ContentNegotiation
+import io.ktor.jackson.jackson
+import io.ktor.response.respond
+import io.ktor.routing.get
+import io.ktor.routing.routing
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 
 fun Application.module() {
 
-    val intRepo: IntRepo = IntRepoImpl()
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
 
+    // todo: status page 404 / 500
     install(ContentNegotiation) {
         jackson {
         }
@@ -28,23 +27,19 @@ fun Application.module() {
     routing {
         get("/records") {
             call.respond(listOf(
-                    Record("uuid1", 1, 20181102, 1918, "fish", 14, System.currentTimeMillis(), false)
+                    Record("uuid1", 1, "2018-11-02", "19:18", "fish", 14)
             ))
         }
-        route("i") {
-            get {
-                call.respond(mapOf("i" to intRepo.getI()))
-            }
-            post {
-                intRepo.addI(call.receive<PostI>().add)
-                call.respondText { "done" }
-            }
-        }
-        get("records_count") {
+        get("/records_count") {
             call.respond(mapOf("count" to recordsRepo.getRecordsCount()))
         }
-        get("records_updates") {
-            call.respond(recordsRepo.getRecordsUpdates(0, "", 100))
+        get("/get_records_updates") {
+            val receiveParameters = call.request.queryParameters
+            call.respond(recordsRepo.getRecordsUpdates(
+                    lastUpdate = receiveParameters["last_updated"]?.toLongOrNull()?.takeIf { it >= 0L } ?: 0L,
+                    lastUuid = receiveParameters["last_uuid"] ?: "",
+                    count = receiveParameters["count"]?.toIntOrNull()?.takeIf { it >= 0 } ?: 10
+            ))
         }
     }
 }

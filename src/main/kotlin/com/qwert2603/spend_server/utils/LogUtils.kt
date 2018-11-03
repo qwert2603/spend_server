@@ -1,6 +1,11 @@
 package com.qwert2603.spend_server.utils
 
 object LogUtils {
+
+    fun d(msg: String) {
+        d("AASSDD", msg)
+    }
+
     fun d(tag: String = "AASSDD", msg: String) {
         println("$tag $msg")
     }

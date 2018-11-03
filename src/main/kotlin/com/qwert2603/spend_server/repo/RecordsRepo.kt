@@ -1,15 +1,14 @@
 package com.qwert2603.spend_server.repo
 
-import com.qwert2603.spend_server.entity.Record
-import com.qwert2603.spend_server.entity.RecordPost
+import com.qwert2603.spend_entity.Record
+import com.qwert2603.spend_entity.RecordsUpdates
+
 
 interface RecordsRepo {
 
     /**
-     *@return list of records updates where [Record.updated] > [updateMillis] or ([Record.updated]==[updateMillis] and [Record.uuid] > [uuid]).
-     * sorted by:
-     * - [Record.updated]
-     * - [Record.uuid]
+     * @return list of records updates where "updated" > [updateMillis] or (["updated" == [updateMillis] and [Record.uuid] > [uuid]).
+     * sorted by: updated, uuid.
      *
      *
      * //todo: this is sort for list in android app.
@@ -19,13 +18,14 @@ interface RecordsRepo {
      * - [Record.kind] DESC
      * - [Record.uuid]
      */
-    fun getRecordsUpdates(updateMillis: Long, uuid: String, count: Int): List<Record>
+    fun getRecordsUpdates(lastUpdate: Long, lastUuid: String, count: Int): RecordsUpdates
 
-    /** create or update existing records and [Record.updated] to now. */
-    fun saveRecords(list: RecordPost)
+    /** create or update existing records and set "updated" to now. */
+    fun saveRecords(list: List<Record>)
 
-    /** set [Record.deleted] to true and [Record.updated] to now. */
+    /** set "deleted" to true and "Record.updated" to now. */
     fun deleteRecords(uuids: List<String>)
 
+    /** just for test. */
     fun getRecordsCount(): Int
 }

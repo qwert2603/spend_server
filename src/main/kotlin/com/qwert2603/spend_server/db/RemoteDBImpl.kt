@@ -39,10 +39,13 @@ class RemoteDBImpl : RemoteDB {
         }
     }
 
-    private fun getPreparedStatement(sql: String): PreparedStatement {
-        val connection = DriverManager.getConnection("jdbc:postgresql://192.168.1.26:5432/spend_test", "postgres", "1234")
-        return connection.prepareStatement(sql)
-    }
+    private fun getPreparedStatement(sql: String): PreparedStatement = DriverManager
+            .getConnection(
+                    "jdbc:postgresql://192.168.1.26:5432/spend_test",
+                    "postgres",
+                    "1234"
+            )
+            .prepareStatement(sql)
 
     private fun <T> sendRequest(uuid: UUID, request: () -> T): T {
         try {
