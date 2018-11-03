@@ -7,7 +7,7 @@ import com.qwert2603.spend_entity.RecordsUpdates
 interface RecordsRepo {
 
     /**
-     * @return list of records updates where "updated" > [updateMillis] or (["updated" == [updateMillis] and [Record.uuid] > [uuid]).
+     * @return list of records updates where "updated" > [lastUpdate] or (["updated" == [lastUpdate] and [Record.uuid] > [lastUuid]).
      * sorted by: updated, uuid.
      *
      *

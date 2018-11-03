@@ -2,6 +2,7 @@ package com.qwert2603.spend_server
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.qwert2603.spend_entity.RecordsDelete
+import com.qwert2603.spend_entity.RestContract
 import com.qwert2603.spend_server.db.RemoteDBImpl
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
@@ -19,6 +20,7 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.delete
 import io.ktor.routing.get
+import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -47,11 +49,11 @@ fun Application.module() {
         get("get_500") { throw Exception("500 done!") }
         get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
 
-        get("/records_count") {
+        get("records_count") {
             call.respond(mapOf("count" to recordsRepo.getRecordsCount()))
         }
 
-        get("/get_records_updates") {
+        get(RestContract.ENDPOINT_GET_RECORDS_UPDATES) {
             val receiveParameters = call.request.queryParameters
             call.respond(recordsRepo.getRecordsUpdates(
                     lastUpdate = receiveParameters["last_updated"]
@@ -65,7 +67,10 @@ fun Application.module() {
                             ?: 10
             ))
         }
-        delete("delete_records") {
+        post(RestContract.ENDPOINT_SAVE_RECORDS) {
+
+        }
+        delete(RestContract.ENDPOINT_DELETE_RECORDS) {
             val uuids = call.receive<RecordsDelete>().uuids
             if (uuids.isEmpty()) call.respond(HttpStatusCode.NoContent)
             if (uuids.size > SpendServerConst.MAX_RECORDS_TO_DELETE_COUNT) call.respond(HttpStatusCode.BadRequest)
