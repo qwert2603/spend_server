@@ -54,6 +54,10 @@ fun Application.module() {
             call.respond(mapOf("count" to recordsRepo.getRecordsCount()))
         }
 
+        get("dump") {
+            call.respond(recordsRepo.getAllRecords())
+        }
+
         get(RestContract.ENDPOINT_GET_RECORDS_UPDATES) {
             val receiveParameters = call.request.queryParameters
             call.respond(recordsRepo.getRecordsUpdates(

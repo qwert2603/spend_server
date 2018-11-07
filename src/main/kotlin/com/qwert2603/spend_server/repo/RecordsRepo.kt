@@ -28,4 +28,7 @@ interface RecordsRepo {
 
     /** just for test. */
     fun getRecordsCount(): Int
+
+    /** for dump. */
+    fun getAllRecords(): List<Record>
 }

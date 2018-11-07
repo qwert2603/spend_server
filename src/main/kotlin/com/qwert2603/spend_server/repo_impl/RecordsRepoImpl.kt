@@ -9,9 +9,21 @@ import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.utils.getIntNullable
 import com.qwert2603.spend_server.utils.toSqlDate
 import com.qwert2603.spend_server.utils.toSqlTime
+import java.sql.ResultSet
 import java.sql.Types
 
 class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
+
+    companion object {
+        private fun ResultSet.makeRecord() = Record(
+                uuid = getString("uuid"),
+                recordTypeId = getInt("record_type_id"),
+                date = getInt("date"),
+                time = getIntNullable("time"),
+                kind = getString("kind"),
+                value = getInt("value")
+        )
+    }
 
     override fun getRecordsUpdates(lastUpdate: Long, lastUuid: String, count: Int): RecordsUpdates {
         var lastUpdateInfo = LastUpdateInfo(lastUpdate, lastUuid)
@@ -38,14 +50,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                                         lastUuid = it.getString("uuid")
                                 )
                             }
-                            Record(
-                                    uuid = it.getString("uuid"),
-                                    recordTypeId = it.getInt("record_type_id"),
-                                    date = it.getInt("date"),
-                                    time = it.getIntNullable("time"),
-                                    kind = it.getString("kind"),
-                                    value = it.getInt("value")
-                            )
+                            it.makeRecord()
                         },
                         args = listOf(lastUpdate, lastUpdate, lastUuid, count)
                 )
@@ -96,4 +101,19 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     override fun getRecordsCount(): Int {
         return remoteDB.query("SELECT COUNT (*) FROM records", { it.getInt(1) }).first()
     }
+
+    override fun getAllRecords(): List<Record> = remoteDB
+            .query(sql = """
+                        SELECT
+                          uuid,
+                          record_type_id,
+                          to_char(date, 'YYYYMMDD') AS date,
+                          to_char(time, 'HH24MI')   AS time,
+                          kind,
+                          value
+                        FROM records
+                        ORDER BY date, time NULLS FIRST, record_type_id, kind, uuid
+                        """.trimMargin(),
+                    mapper = { it.makeRecord() }
+            )
 }
