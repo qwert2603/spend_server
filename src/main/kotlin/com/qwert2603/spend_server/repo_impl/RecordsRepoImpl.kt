@@ -1,10 +1,10 @@
 package com.qwert2603.spend_server.repo_impl
 
-import com.qwert2603.spend_entity.LastUpdateInfo
-import com.qwert2603.spend_entity.Record
-import com.qwert2603.spend_entity.RecordsUpdates
 import com.qwert2603.spend_server.db.RemoteDB
 import com.qwert2603.spend_server.db.asNullableArg
+import com.qwert2603.spend_server.entity.GetRecordsUpdatesResult
+import com.qwert2603.spend_server.entity.LastUpdateInfo
+import com.qwert2603.spend_server.entity.Record
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.utils.getIntNullable
 import com.qwert2603.spend_server.utils.toSqlDate
@@ -17,7 +17,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     companion object {
         private fun ResultSet.makeRecord() = Record(
                 uuid = getString("uuid"),
-                recordTypeId = getInt("record_type_id"),
+                recordTypeId = getLong("record_type_id"),
                 date = getInt("date"),
                 time = getIntNullable("time"),
                 kind = getString("kind"),
@@ -25,7 +25,12 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
         )
     }
 
-    override fun getRecordsUpdates(lastUpdate: Long, lastUuid: String, count: Int): RecordsUpdates {
+    private sealed class RecordChange {
+        data class Updated(val record: Record) : RecordChange()
+        data class Deleted(val uuid: String) : RecordChange()
+    }
+
+    override fun getRecordsUpdates(lastUpdate: Long, lastUuid: String, count: Int): GetRecordsUpdatesResult {
         var lastUpdateInfo = LastUpdateInfo(lastUpdate, lastUuid)
         return remoteDB
                 .query(sql = """
@@ -50,14 +55,26 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                                         lastUuid = it.getString("uuid")
                                 )
                             }
-                            it.makeRecord()
+                            if (it.getBoolean("deleted")) {
+                                RecordChange.Deleted(it.getString("uuid"))
+                            } else {
+                                RecordChange.Updated(it.makeRecord())
+                            }
                         },
                         args = listOf(lastUpdate, lastUpdate, lastUuid, count)
                 )
-                .let { RecordsUpdates(it, lastUpdateInfo) }
+                .let { changes ->
+                    GetRecordsUpdatesResult(
+                            updatedRecords = changes.mapNotNull { (it as? RecordChange.Updated)?.record },
+                            deletedRecordsUuid = changes.mapNotNull { (it as? RecordChange.Deleted)?.uuid },
+                            lastUpdateInfo = lastUpdateInfo
+                    )
+                }
     }
 
     override fun saveRecords(records: List<Record>) {
+        if (records.isEmpty()) return
+
         val sb = StringBuilder("INSERT INTO records (uuid, record_type_id, date, time, kind, value, updated) VALUES ")
         repeat(records.size) { sb.append("(?, ?, ?, ?, ?, ?, DEFAULT),") }
         sb.deleteCharAt(sb.lastIndex) // remove last ','.
@@ -88,6 +105,8 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     }
 
     override fun deleteRecords(uuids: List<String>) {
+        if (uuids.isEmpty()) return
+
         val sb = StringBuilder("""
             UPDATE records
             SET deleted = TRUE, updated = DEFAULT

@@ -1,7 +1,7 @@
 package com.qwert2603.spend_server.repo
 
-import com.qwert2603.spend_entity.Record
-import com.qwert2603.spend_entity.RecordsUpdates
+import com.qwert2603.spend_server.entity.GetRecordsUpdatesResult
+import com.qwert2603.spend_server.entity.Record
 
 
 interface RecordsRepo {
@@ -18,7 +18,7 @@ interface RecordsRepo {
      * - [Record.kind] DESC
      * - [Record.uuid]
      */
-    fun getRecordsUpdates(lastUpdate: Long, lastUuid: String, count: Int): RecordsUpdates
+    fun getRecordsUpdates(lastUpdate: Long, lastUuid: String, count: Int): GetRecordsUpdatesResult
 
     /** create or update existing records and set "updated" to now. */
     fun saveRecords(records: List<Record>)

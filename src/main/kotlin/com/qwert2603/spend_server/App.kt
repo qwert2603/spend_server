@@ -1,10 +1,8 @@
 package com.qwert2603.spend_server
 
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.qwert2603.spend_entity.RecordsDelete
-import com.qwert2603.spend_entity.RecordsSave
-import com.qwert2603.spend_entity.RestContract
 import com.qwert2603.spend_server.db.RemoteDBImpl
+import com.qwert2603.spend_server.entity.SaveRecordsParam
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
 import com.qwert2603.spend_server.utils.LogUtils
@@ -19,7 +17,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.jackson.jackson
 import io.ktor.request.receive
 import io.ktor.response.respond
-import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
@@ -31,7 +28,8 @@ fun Application.module() {
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
 
     install(StatusPages) {
-        exception<JsonProcessingException> {
+        exception<JsonProcessingException> { cause ->
+            LogUtils.e(cause)
             call.respond(HttpStatusCode.BadRequest)
         }
         exception<Throwable> { cause ->
@@ -58,7 +56,7 @@ fun Application.module() {
             call.respond(recordsRepo.getAllRecords())
         }
 
-        get(RestContract.ENDPOINT_GET_RECORDS_UPDATES) {
+        get("get_records_updates") {
             val receiveParameters = call.request.queryParameters
             call.respond(recordsRepo.getRecordsUpdates(
                     lastUpdate = receiveParameters["last_updated"]
@@ -72,19 +70,14 @@ fun Application.module() {
                             ?: 10
             ))
         }
-        post(RestContract.ENDPOINT_SAVE_RECORDS) {
-            val records = call.receive<RecordsSave>().records
-            if (records.isEmpty()) call.respond(HttpStatusCode.NoContent)
-            if (records.size > SpendServerConst.MAX_RECORDS_TO_SAVE_COUNT) call.respond(HttpStatusCode.BadRequest)
-            recordsRepo.saveRecords(records)
+        post("save_records") {
+            val (updatedRecords, deletedRecordsUuid) = call.receive<SaveRecordsParam>()
+            if (updatedRecords.size + deletedRecordsUuid.size > SpendServerConst.MAX_RECORDS_TO_SAVE_COUNT) {
+                call.respond(HttpStatusCode.BadRequest)
+            }
+            recordsRepo.saveRecords(updatedRecords)
+            recordsRepo.deleteRecords(deletedRecordsUuid)
             call.respond("done")
-        }
-        delete(RestContract.ENDPOINT_DELETE_RECORDS) {
-            val uuids = call.receive<RecordsDelete>().uuids
-            if (uuids.isEmpty()) call.respond(HttpStatusCode.NoContent)
-            if (uuids.size > SpendServerConst.MAX_RECORDS_TO_DELETE_COUNT) call.respond(HttpStatusCode.BadRequest)
-            recordsRepo.deleteRecords(uuids)
-            call.respond(HttpStatusCode.NoContent)
         }
     }
 }

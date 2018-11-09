@@ -2,7 +2,6 @@ buildscript {
     ext.kotlin_version = '1.3.0'
     ext.ktor_version = '1.0.0-beta-3'
     ext.postgresql_version = '42.2.5'
-    ext.spend_entity_version = '0.4.1'
 
     repositories {
         mavenCentral()
@@ -35,7 +34,6 @@ dependencies {
     implementation "io.ktor:ktor-server-netty:$ktor_version"
     implementation "io.ktor:ktor-jackson:$ktor_version"
     implementation "org.postgresql:postgresql:$postgresql_version"
-    implementation "com.github.qwert2603:spend_entity:$spend_entity_version"
 }
 
 compileKotlin {
