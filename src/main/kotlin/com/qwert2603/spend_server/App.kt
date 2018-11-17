@@ -17,15 +17,50 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.jackson.jackson
 import io.ktor.request.receive
 import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.routing
+import io.ktor.routing.*
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
-fun Application.module() {
-
+fun Route.api_v1_0() {
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
+
+    get("get_500") { throw Exception("500 done!") }
+    get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
+
+    get("records_count") {
+        call.respond(mapOf("count" to recordsRepo.getRecordsCount()))
+    }
+
+    get("dump") {
+        call.respond(recordsRepo.getAllRecords())
+    }
+
+    get("get_records_updates") {
+        val receiveParameters = call.request.queryParameters
+        call.respond(recordsRepo.getRecordsUpdates(
+                lastUpdate = receiveParameters["last_updated"]
+                        ?.toLongOrNull()
+                        ?.takeIf { it >= 0L }
+                        ?: 0L,
+                lastUuid = receiveParameters["last_uuid"] ?: "",
+                count = receiveParameters["count"]
+                        ?.toIntOrNull()
+                        ?.applyRange(0..SpendServerConst.MAX_RECORDS_UPDATES_COUNT)
+                        ?: 10
+        ))
+    }
+    post("save_records") {
+        val (updatedRecords, deletedRecordsUuid) = call.receive<SaveRecordsParam>()
+        if (updatedRecords.size + deletedRecordsUuid.size > SpendServerConst.MAX_RECORDS_TO_SAVE_COUNT) {
+            call.respond(HttpStatusCode.BadRequest)
+        }
+        recordsRepo.saveRecords(updatedRecords)
+        recordsRepo.deleteRecords(deletedRecordsUuid)
+        call.respond(mapOf("result" to "done"))
+    }
+}
+
+fun Application.module() {
 
     install(StatusPages) {
         exception<JsonProcessingException> { cause ->
@@ -45,40 +80,7 @@ fun Application.module() {
         }
     }
     routing {
-        get("get_500") { throw Exception("500 done!") }
-        get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
-
-        get("records_count") {
-            call.respond(mapOf("count" to recordsRepo.getRecordsCount()))
-        }
-
-        get("dump") {
-            call.respond(recordsRepo.getAllRecords())
-        }
-
-        get("get_records_updates") {
-            val receiveParameters = call.request.queryParameters
-            call.respond(recordsRepo.getRecordsUpdates(
-                    lastUpdate = receiveParameters["last_updated"]
-                            ?.toLongOrNull()
-                            ?.takeIf { it >= 0L }
-                            ?: 0L,
-                    lastUuid = receiveParameters["last_uuid"] ?: "",
-                    count = receiveParameters["count"]
-                            ?.toIntOrNull()
-                            ?.applyRange(0..SpendServerConst.MAX_RECORDS_UPDATES_COUNT)
-                            ?: 10
-            ))
-        }
-        post("save_records") {
-            val (updatedRecords, deletedRecordsUuid) = call.receive<SaveRecordsParam>()
-            if (updatedRecords.size + deletedRecordsUuid.size > SpendServerConst.MAX_RECORDS_TO_SAVE_COUNT) {
-                call.respond(HttpStatusCode.BadRequest)
-            }
-            recordsRepo.saveRecords(updatedRecords)
-            recordsRepo.deleteRecords(deletedRecordsUuid)
-            call.respond("done")
-        }
+        route("api/v1.0/", Route::api_v1_0)
     }
 }
 
