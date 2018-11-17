@@ -1,6 +1,7 @@
 package com.qwert2603.spend_server.db
 
 import com.qwert2603.spend_server.utils.LogUtils
+import com.qwert2603.spend_server.utils.SpendServerConst
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -41,9 +42,9 @@ class RemoteDBImpl : RemoteDB {
 
     private fun getPreparedStatement(sql: String): PreparedStatement = DriverManager
             .getConnection(
-                    "jdbc:postgresql://192.168.1.26:5432/spend_test",
-                    "postgres",
-                    "1234"
+                    SpendServerConst.DB_URL,
+                    SpendServerConst.DB_USER,
+                    SpendServerConst.DB_PASSWORD
             )
             .prepareStatement(sql)
 

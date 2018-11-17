@@ -13,4 +13,8 @@ object SpendServerConst {
 
     const val MAX_RECORDS_TO_SAVE_COUNT = 250
     const val MAX_RECORDS_UPDATES_COUNT = 250
+
+    const val DB_URL = "jdbc:postgresql://192.168.1.26:5432/spend_test"
+    const val DB_USER = "postgres"
+    const val DB_PASSWORD = "1234"
 }
