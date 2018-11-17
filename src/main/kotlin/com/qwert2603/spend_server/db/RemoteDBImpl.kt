@@ -2,12 +2,16 @@ package com.qwert2603.spend_server.db
 
 import com.qwert2603.spend_server.utils.LogUtils
 import com.qwert2603.spend_server.utils.SpendServerConst
+import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.util.*
 
 class RemoteDBImpl : RemoteDB {
+
+    @Volatile
+    private var connection: Connection? = null
 
     init {
         Class.forName(org.postgresql.Driver::class.java.name)
@@ -40,19 +44,32 @@ class RemoteDBImpl : RemoteDB {
         }
     }
 
-    private fun getPreparedStatement(sql: String): PreparedStatement = DriverManager
-            .getConnection(
-                    SpendServerConst.DB_URL,
-                    SpendServerConst.DB_USER,
-                    SpendServerConst.DB_PASSWORD
-            )
-            .prepareStatement(sql)
+    @Synchronized
+    private fun getPreparedStatement(sql: String): PreparedStatement {
+        if (connection == null) {
+            LogUtils.d("RemoteDBImpl", "creating connection")
+            connection = DriverManager
+                    .getConnection(
+                            SpendServerConst.DB_URL,
+                            SpendServerConst.DB_USER,
+                            SpendServerConst.DB_PASSWORD
+                    )
+        }
+
+        return connection!!.prepareStatement(sql)
+    }
+
+    @Synchronized
+    private fun clearConnection() {
+        connection = null
+    }
 
     private fun <T> sendRequest(uuid: UUID, request: () -> T): T {
         try {
             return request()
         } catch (e: Exception) {
-            LogUtils.d("RemoteDBImpl", "$uuid <<-- error ${e.message}")
+            LogUtils.e("RemoteDBImpl", "$uuid <<-- error ${e.message}")
+            clearConnection()
             throw e
         }
     }
