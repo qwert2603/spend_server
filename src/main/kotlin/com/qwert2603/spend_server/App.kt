@@ -3,6 +3,7 @@ package com.qwert2603.spend_server
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.qwert2603.spend_server.db.RemoteDBImpl
 import com.qwert2603.spend_server.entity.SaveRecordsParam
+import com.qwert2603.spend_server.env.E
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
 import com.qwert2603.spend_server.utils.LogUtils
@@ -87,7 +88,7 @@ fun Application.module() {
 fun main(args: Array<String>) {
     embeddedServer(
             factory = Netty,
-            port = 8359,
+            port = E.env.port,
             module = Application::module
     ).start()
 }
