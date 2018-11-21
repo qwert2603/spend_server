@@ -27,7 +27,10 @@ fun Int.toSqlTime(): java.sql.Time {
     val hour = this / 100
     val minute = this % 100
     return GregorianCalendar.getInstance()
-            .also { it.set(1970, Calendar.JANUARY, 0, hour, minute, 0) }
+            .also {
+                it.set(1970, Calendar.JANUARY, 0, hour, minute, 0)
+                it.set(Calendar.MILLISECOND, 0)
+            }
             .timeInMillis
             .let { java.sql.Time(it) }
 }
