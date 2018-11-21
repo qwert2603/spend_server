@@ -5,6 +5,7 @@ import com.qwert2603.spend_server.db.asNullableArg
 import com.qwert2603.spend_server.entity.GetRecordsUpdatesResult
 import com.qwert2603.spend_server.entity.LastUpdateInfo
 import com.qwert2603.spend_server.entity.Record
+import com.qwert2603.spend_server.entity.RecordDump
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.utils.getIntNullable
 import com.qwert2603.spend_server.utils.toSqlDate
@@ -121,7 +122,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
         return remoteDB.query("SELECT COUNT (*) FROM records", { it.getInt(1) }).first()
     }
 
-    override fun getAllRecords(): List<Record> = remoteDB
+    override fun getAllRecords(): List<RecordDump> = remoteDB
             .query(sql = """
                         SELECT
                           uuid,
@@ -129,10 +130,23 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                           to_char(date, 'YYYYMMDD') AS date,
                           to_char(time, 'HH24MI')   AS time,
                           kind,
-                          value
+                          value,
+                          updated,
+                          deleted
                         FROM records
                         ORDER BY date, time NULLS FIRST, record_type_id, kind, uuid
                         """.trimMargin(),
-                    mapper = { it.makeRecord() }
+                    mapper = {
+                        RecordDump(
+                                uuid = it.getString("uuid"),
+                                recordTypeId = it.getLong("record_type_id"),
+                                date = it.getInt("date"),
+                                time = it.getIntNullable("time"),
+                                kind = it.getString("kind"),
+                                value = it.getInt("value"),
+                                updated = it.getLong("updated"),
+                                deleted = it.getBoolean("deleted")
+                        )
+                    }
             )
 }

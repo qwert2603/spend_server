@@ -2,6 +2,7 @@ package com.qwert2603.spend_server.repo
 
 import com.qwert2603.spend_server.entity.GetRecordsUpdatesResult
 import com.qwert2603.spend_server.entity.Record
+import com.qwert2603.spend_server.entity.RecordDump
 
 
 interface RecordsRepo {
@@ -30,5 +31,5 @@ interface RecordsRepo {
     fun getRecordsCount(): Int
 
     /** for dump. */
-    fun getAllRecords(): List<Record>
+    fun getAllRecords(): List<RecordDump>
 }
