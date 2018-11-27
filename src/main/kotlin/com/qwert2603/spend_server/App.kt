@@ -33,7 +33,7 @@ fun Route.api_v2_0() {
     }
 
     get("dump") {
-        call.respond(recordsRepo.getAllRecords())
+        call.respond(recordsRepo.getDump())
     }
 
     get("get_records_updates") {

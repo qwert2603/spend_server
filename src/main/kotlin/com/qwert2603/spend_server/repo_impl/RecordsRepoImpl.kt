@@ -2,10 +2,7 @@ package com.qwert2603.spend_server.repo_impl
 
 import com.qwert2603.spend_server.db.RemoteDB
 import com.qwert2603.spend_server.db.asNullableArg
-import com.qwert2603.spend_server.entity.GetRecordsUpdatesResult
-import com.qwert2603.spend_server.entity.Record
-import com.qwert2603.spend_server.entity.RecordCategory
-import com.qwert2603.spend_server.entity.RecordDump
+import com.qwert2603.spend_server.entity.*
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.utils.getIntNullable
 import com.qwert2603.spend_server.utils.toSqlDate
@@ -152,33 +149,55 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     }
 
     @Synchronized
-    override fun getAllRecords(): List<RecordDump> = remoteDB
-            .query(sql = """
+    override fun getDump(): Dump {
+        val records = remoteDB.query(sql = """
                         SELECT
                           uuid,
-                          record_type_id,
+                          record_category_uuid,
                           to_char(date, 'YYYYMMDD') AS date,
                           to_char(time, 'HH24MI')   AS time,
                           kind,
                           value,
-                          updated,
+                          change_id,
                           deleted
                         FROM records
-                        ORDER BY date, time NULLS FIRST, record_type_id, kind, uuid
+                        ORDER BY date, time NULLS FIRST, record_category_uuid, kind, uuid
                         """.trimMargin(),
-                    mapper = {
-                        RecordDump(
-                                uuid = it.getString("uuid"),
-                                recordTypeId = it.getLong("record_type_id"),
-                                date = it.getInt("date"),
-                                time = it.getIntNullable("time"),
-                                kind = it.getString("kind"),
-                                value = it.getInt("value"),
-                                updated = it.getLong("updated"),
-                                deleted = it.getBoolean("deleted")
-                        )
-                    }
-            )
+                mapper = {
+                    RecordDump(
+                            uuid = it.getString("uuid"),
+                            recordCategoryUuid = it.getString("record_category_uuid"),
+                            date = it.getInt("date"),
+                            time = it.getIntNullable("time"),
+                            kind = it.getString("kind"),
+                            value = it.getInt("value"),
+                            changeId = it.getLong("change_id"),
+                            deleted = it.getBoolean("deleted")
+                    )
+                })
+
+        val categories = remoteDB
+                .query(sql = """
+                        SELECT
+                          uuid,
+                          name,
+                          record_type_id,
+                          change_id
+                        FROM record_categories
+                        ORDER BY record_type_id, uuid
+                        """.trimMargin(),
+                        mapper = {
+                            RecordCategoryDump(
+                                    uuid = it.getString("uuid"),
+                                    recordTypeId = it.getLong("record_type_id"),
+                                    name = it.getString("name"),
+                                    changeId = it.getLong("change_id")
+                            )
+                        }
+                )
+
+        return Dump(categories, records)
+    }
 }
 
 //    private val database = Database.connect(
