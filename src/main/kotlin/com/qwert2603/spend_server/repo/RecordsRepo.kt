@@ -8,18 +8,14 @@ import com.qwert2603.spend_server.entity.RecordDump
 interface RecordsRepo {
 
     /**
-     * @return list of records updates where "updated" > [lastUpdate] or (["updated" == [lastUpdate] and [Record.uuid] > [lastUuid]).
-     * sorted by: updated, uuid.
-     *
-     *
-     * //todo: this is sort for list in android app.
-     * - [Record.date] DESC
-     * - [Record.time] DESC NULLS LAST
-     * - [Record.recordTypeId]
-     * - [Record.kind] DESC
-     * - [Record.uuid]
+     * @return list of updated records categories and records updates.
+     * both lists sorted by change_id.
      */
-    fun getRecordsUpdates(lastUpdate: Long, lastUuid: String, count: Int): GetRecordsUpdatesResult
+    fun getRecordsUpdates(
+            lastCategoryChangeId: Long,
+            lastRecordChangeId: Long,
+            count: Int
+    ): GetRecordsUpdatesResult
 
     /** create or update existing records and set "updated" to now. */
     fun saveRecords(records: List<Record>)

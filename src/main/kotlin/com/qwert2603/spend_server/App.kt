@@ -22,7 +22,7 @@ import io.ktor.routing.*
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
-fun Route.api_v1_0() {
+fun Route.api_v2_0() {
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
 
     get("get_500") { throw Exception("500 done!") }
@@ -39,20 +39,23 @@ fun Route.api_v1_0() {
     get("get_records_updates") {
         val receiveParameters = call.request.queryParameters
         call.respond(recordsRepo.getRecordsUpdates(
-                lastUpdate = receiveParameters["last_updated"]
+                lastCategoryChangeId = receiveParameters["last_category_change_id"]
                         ?.toLongOrNull()
                         ?.takeIf { it >= 0L }
                         ?: 0L,
-                lastUuid = receiveParameters["last_uuid"] ?: "",
+                lastRecordChangeId = receiveParameters["last_record_change_id"]
+                        ?.toLongOrNull()
+                        ?.takeIf { it >= 0L }
+                        ?: 0L,
                 count = receiveParameters["count"]
                         ?.toIntOrNull()
-                        ?.applyRange(0..SpendServerConst.MAX_RECORDS_UPDATES_COUNT)
+                        ?.applyRange(0..SpendServerConst.MAX_ITEMS_UPDATES_COUNT)
                         ?: 10
         ))
     }
     post("save_records") {
         val (updatedRecords, deletedRecordsUuid) = call.receive<SaveRecordsParam>()
-        if (updatedRecords.size + deletedRecordsUuid.size > SpendServerConst.MAX_RECORDS_TO_SAVE_COUNT) {
+        if (updatedRecords.size + deletedRecordsUuid.size > SpendServerConst.MAX_ITEMS_TO_SAVE_COUNT) {
             call.respond(HttpStatusCode.BadRequest)
         }
         recordsRepo.saveRecords(updatedRecords)
@@ -81,7 +84,7 @@ fun Application.module() {
         }
     }
     routing {
-        route("api/v1.0/", Route::api_v1_0)
+        route("api/v2.0/", Route::api_v2_0)
     }
 }
 

@@ -1,7 +1,9 @@
 package com.qwert2603.spend_server.entity
 
 data class GetRecordsUpdatesResult(
-    val updatedRecords: List<Record>, // sorted by: updated, uuid
-    val deletedRecordsUuid: List<String>,
-    val lastUpdateInfo: LastUpdateInfo
+        val updatedCategories: List<RecordCategory>, // sorted by change_id
+        val updatedRecords: List<Record>, // sorted by change_id
+        val deletedRecordsUuid: List<String>,
+        val lastCategoryChangeId: Long,
+        val lastRecordChangeId: Long
 )
