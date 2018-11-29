@@ -4,6 +4,5 @@ data class GetRecordsUpdatesResult(
         val updatedCategories: List<RecordCategory>, // sorted by change_id
         val updatedRecords: List<Record>, // sorted by change_id
         val deletedRecordsUuid: List<String>,
-        val lastCategoryChangeId: Long,
-        val lastRecordChangeId: Long
+        val lastChangeInfo: LastChangeInfo
 )

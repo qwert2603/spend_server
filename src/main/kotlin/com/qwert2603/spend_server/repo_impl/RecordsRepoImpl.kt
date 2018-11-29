@@ -91,8 +91,10 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                 updatedCategories = updatedCategories,
                 updatedRecords = recordsChanges.mapNotNull { (it as? RecordChange.Updated)?.record },
                 deletedRecordsUuid = recordsChanges.mapNotNull { (it as? RecordChange.Deleted)?.uuid },
-                lastCategoryChangeId = newLastCategoryChangeId,
-                lastRecordChangeId = newLastRecordChangeId
+                lastChangeInfo = LastChangeInfo(
+                        lastCategoryChangeId = newLastCategoryChangeId,
+                        lastRecordChangeId = newLastRecordChangeId
+                )
         )
     }
 
@@ -111,7 +113,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                 kind                 = EXCLUDED.kind,
                 value                = EXCLUDED.value,
                 change_id            = DEFAULT
-        """.trimIndent())
+        """.trimIndent()) // todo: EXCLUDED.change_id
         remoteDB.execute(
                 sql = sb.toString(),
                 args = records
