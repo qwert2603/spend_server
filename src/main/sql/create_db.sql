@@ -31,7 +31,7 @@ create table records
 	value integer not null,
 	deleted boolean default false not null,
 	time time,
-	record_category_uuid text,
+	record_category_uuid text not null,
 	change_id integer default nextval('record_change_id_seq'::regclass) not null
 )
 ;
