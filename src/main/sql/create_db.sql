@@ -67,3 +67,6 @@ alter table records
 ;
 
 INSERT INTO record_types (id, name) VALUES (1, 'расход'), (2, 'доход');
+
+-- ALTER SEQUENCE category_change_id_seq RESTART WITH 42;
+-- ALTER SEQUENCE record_change_id_seq RESTART WITH 1918;
