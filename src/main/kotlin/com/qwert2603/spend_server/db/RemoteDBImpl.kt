@@ -20,7 +20,6 @@ class RemoteDBImpl : RemoteDB {
     override fun <T> query(sql: String, mapper: (resultSet: ResultSet) -> T, args: List<Any>): List<T> {
         val uuid = UUID.randomUUID()
         return sendRequest(uuid) {
-            LogUtils.d("RemoteDBImpl", "$uuid -->> $sql $args")
             getPreparedStatement(sql)
                     .also { it.setArgs(args) }
                     .executeQuery()
@@ -29,18 +28,15 @@ class RemoteDBImpl : RemoteDB {
                         while (it.next()) list.add(mapper(it))
                         list
                     }
-                    .also { LogUtils.d("RemoteDBImpl", "$uuid <<-- $sql $args $it") }
         }
     }
 
     override fun execute(sql: String, args: List<Any>) {
         val uuid = UUID.randomUUID()
         sendRequest(uuid) {
-            LogUtils.d("RemoteDBImpl", "$uuid -->> $sql $args")
             getPreparedStatement(sql)
                     .also { it.setArgs(args) }
                     .execute()
-            LogUtils.d("RemoteDBImpl", "$uuid <<-- $sql $args")
         }
     }
 

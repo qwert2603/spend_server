@@ -59,12 +59,12 @@ def send_email(subject, text):
 
 
 try:
-    url = 'http://192.168.1.26:8354/api/v1.0/dump'
+    url = 'http://192.168.1.26:8354/api/v2.0/dump'
     response = urllib.request.urlopen(url)
     response_string = response.read().decode("utf-8")
     write_file.write(response_string)
 
-    b = send_email('spend dump cuccess', 'dump of {}'.format(now_string))
+    b = send_email('spend dump success', 'dump of {}'.format(now_string))
     if b: print('ok')
 except Exception as e:
     write_file.write(str(e))

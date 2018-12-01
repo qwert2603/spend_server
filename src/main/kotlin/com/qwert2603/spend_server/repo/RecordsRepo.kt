@@ -27,4 +27,6 @@ interface RecordsRepo {
     fun getRecordsCount(): Int
 
     fun getDump(): Dump
+
+    fun restoreDump(dump: Dump)
 }

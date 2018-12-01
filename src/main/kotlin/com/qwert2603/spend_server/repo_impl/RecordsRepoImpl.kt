@@ -200,6 +200,54 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         return Dump(categories, records)
     }
+
+    @Synchronized
+    override fun restoreDump(dump: Dump) {
+        remoteDB.execute("DELETE FROM records")
+        remoteDB.execute("DELETE FROM record_categories")
+
+        if (dump.categories.isNotEmpty()) {
+            val sb = StringBuilder("INSERT INTO record_categories (uuid, name, record_type_id, change_id) VALUES ")
+            repeat(dump.categories.size) { sb.append("(?, ?, ?, ?),") }
+            sb.deleteCharAt(sb.lastIndex) // remove last ','.
+            remoteDB.execute(
+                    sql = sb.toString(),
+                    args = dump.categories
+                            .map {
+                                listOf(
+                                        it.uuid,
+                                        it.name,
+                                        it.recordTypeId,
+                                        it.changeId
+                                )
+                            }
+                            .flatten()
+            )
+        }
+
+        if (dump.records.isNotEmpty()) {
+            val sb = StringBuilder("INSERT INTO records (uuid, record_category_uuid, date, time, kind, value, change_id, deleted) VALUES ")
+            repeat(dump.records.size) { sb.append("(?, ?, ?, ?, ?, ?, ?, ?),") }
+            sb.deleteCharAt(sb.lastIndex) // remove last ','.
+            remoteDB.execute(
+                    sql = sb.toString(),
+                    args = dump.records
+                            .map {
+                                listOf(
+                                        it.uuid,
+                                        it.recordCategoryUuid,
+                                        it.date.toSqlDate(),
+                                        it.time?.toSqlTime().asNullableArg(Types.TIME),
+                                        it.kind,
+                                        it.value,
+                                        it.changeId,
+                                        it.deleted
+                                )
+                            }
+                            .flatten()
+            )
+        }
+    }
 }
 
 //    private val database = Database.connect(
