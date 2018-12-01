@@ -112,8 +112,8 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                 time                 = EXCLUDED.time,
                 kind                 = EXCLUDED.kind,
                 value                = EXCLUDED.value,
-                change_id            = DEFAULT
-        """.trimIndent()) // todo: EXCLUDED.change_id
+                change_id            = EXCLUDED.change_id
+        """.trimIndent())
         remoteDB.execute(
                 sql = sb.toString(),
                 args = records
@@ -122,7 +122,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                                     it.uuid,
                                     it.recordCategoryUuid,
                                     it.date.toSqlDate(),
-                                    it.time?.toSqlTime().asNullableArg(Types.TIME_WITH_TIMEZONE),
+                                    it.time?.toSqlTime().asNullableArg(Types.TIME),
                                     it.kind,
                                     it.value
                             )
