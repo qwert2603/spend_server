@@ -66,3 +66,4 @@ alter table records
 		foreign key (record_category_uuid) references record_categories
 ;
 
+INSERT INTO record_types (id, name) VALUES (1, 'расход'), (2, 'доход');
