@@ -5,6 +5,7 @@ import com.qwert2603.spend_server.db.RemoteDBImpl
 import com.qwert2603.spend_server.entity.Dump
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
+import com.qwert2603.spend_server.utils.LogUtils
 import java.io.FileReader
 
 //data class JRecord(
@@ -45,6 +46,7 @@ fun main() {
     val fileReader = FileReader(filename)
     val json = fileReader.use { it.readText() }
     val dump = Gson().fromJson(json, Dump::class.java)
+    LogUtils.d("${dump.categories.size} ${dump.records.size}")
 
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
     recordsRepo.restoreDump(dump)

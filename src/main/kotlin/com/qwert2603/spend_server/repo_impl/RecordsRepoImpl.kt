@@ -226,26 +226,28 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
         }
 
         if (dump.records.isNotEmpty()) {
-            val sb = StringBuilder("INSERT INTO records (uuid, record_category_uuid, date, time, kind, value, change_id, deleted) VALUES ")
-            repeat(dump.records.size) { sb.append("(?, ?, ?, ?, ?, ?, ?, ?),") }
-            sb.deleteCharAt(sb.lastIndex) // remove last ','.
-            remoteDB.execute(
-                    sql = sb.toString(),
-                    args = dump.records
-                            .map {
-                                listOf(
-                                        it.uuid,
-                                        it.recordCategoryUuid,
-                                        it.date.toSqlDate(),
-                                        it.time?.toSqlTime().asNullableArg(Types.TIME),
-                                        it.kind,
-                                        it.value,
-                                        it.changeId,
-                                        it.deleted
-                                )
-                            }
-                            .flatten()
-            )
+            dump.records.chunked(1000).forEach { chunk ->
+                val sb = StringBuilder("INSERT INTO records (uuid, record_category_uuid, date, time, kind, value, change_id, deleted) VALUES ")
+                repeat(chunk.size) { sb.append("(?, ?, ?, ?, ?, ?, ?, ?),") }
+                sb.deleteCharAt(sb.lastIndex) // remove last ','.
+                remoteDB.execute(
+                        sql = sb.toString(),
+                        args = chunk
+                                .map {
+                                    listOf(
+                                            it.uuid,
+                                            it.recordCategoryUuid,
+                                            it.date.toSqlDate(),
+                                            it.time?.toSqlTime().asNullableArg(Types.TIME),
+                                            it.kind,
+                                            it.value,
+                                            it.changeId,
+                                            it.deleted
+                                    )
+                                }
+                                .flatten()
+                )
+            }
         }
     }
 }
