@@ -18,3 +18,8 @@ private object Prod : EnvInterface {
     override val dbName = "spend"
     override val port = 8354
 }
+
+private object Mother : EnvInterface {
+    override val dbName = "spend_mother"
+    override val port = 8361
+}
