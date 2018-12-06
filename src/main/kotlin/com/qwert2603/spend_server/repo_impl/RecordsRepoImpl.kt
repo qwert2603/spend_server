@@ -250,6 +250,12 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
             }
         }
     }
+
+    @Synchronized
+    override fun clearAll() {
+        remoteDB.execute("DELETE FROM records")
+        remoteDB.execute("DELETE FROM record_categories")
+    }
 }
 
 //    private val database = Database.connect(

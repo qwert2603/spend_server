@@ -29,4 +29,6 @@ interface RecordsRepo {
     fun getDump(): Dump
 
     fun restoreDump(dump: Dump)
+
+    fun clearAll()
 }

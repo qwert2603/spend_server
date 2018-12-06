@@ -36,6 +36,12 @@ fun Route.api_v2_0() {
         call.respond(recordsRepo.getDump())
     }
 
+    get("clear_all") {
+        if (!E.env.allowClearAll) call.respond(HttpStatusCode.Forbidden)
+        recordsRepo.clearAll()
+        call.respond(mapOf("result" to "done"))
+    }
+
     get("get_records_updates") {
         val receiveParameters = call.request.queryParameters
         call.respond(recordsRepo.getRecordsUpdates(
