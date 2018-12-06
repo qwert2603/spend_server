@@ -30,5 +30,5 @@ interface RecordsRepo {
 
     fun restoreDump(dump: Dump)
 
-    fun clearAll()
+    fun clearAllRecords()
 }

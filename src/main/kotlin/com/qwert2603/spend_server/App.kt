@@ -36,9 +36,9 @@ fun Route.api_v2_0() {
         call.respond(recordsRepo.getDump())
     }
 
-    get("clear_all") {
-        if (!E.env.allowClearAll) call.respond(HttpStatusCode.Forbidden)
-        recordsRepo.clearAll()
+    get("clear_all_records") {
+        if (!E.env.forTesting) call.respond(HttpStatusCode.Forbidden)
+        recordsRepo.clearAllRecords()
         call.respond(mapOf("result" to "done"))
     }
 

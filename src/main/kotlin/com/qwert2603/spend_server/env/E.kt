@@ -7,23 +7,23 @@ object E {
 interface EnvInterface {
     val dbName: String
     val port: Int
-    val allowClearAll: Boolean
+    val forTesting: Boolean
 }
 
 private object Test : EnvInterface {
     override val dbName = "test_spend"
     override val port = 8359
-    override val allowClearAll = true
+    override val forTesting = true
 }
 
 private object Prod : EnvInterface {
     override val dbName = "spend"
     override val port = 8354
-    override val allowClearAll = false
+    override val forTesting = false
 }
 
 private object Mother : EnvInterface {
     override val dbName = "spend_mother"
     override val port = 8361
-    override val allowClearAll = false
+    override val forTesting = false
 }
