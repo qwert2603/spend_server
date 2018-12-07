@@ -37,7 +37,10 @@ fun Route.api_v2_0() {
     }
 
     get("clear_all_records") {
-        if (!E.env.forTesting) call.respond(HttpStatusCode.Forbidden)
+        if (!E.env.forTesting) {
+            call.respond(HttpStatusCode.Forbidden)
+            return@get
+        }
         recordsRepo.clearAllRecords()
         call.respond(mapOf("result" to "done"))
     }
@@ -63,6 +66,7 @@ fun Route.api_v2_0() {
         val (updatedRecords, deletedRecordsUuid) = call.receive<SaveRecordsParam>()
         if (updatedRecords.size + deletedRecordsUuid.size > SpendServerConst.MAX_ITEMS_TO_SAVE_COUNT) {
             call.respond(HttpStatusCode.BadRequest)
+            return@post
         }
         recordsRepo.saveRecords(updatedRecords)
         recordsRepo.deleteRecords(deletedRecordsUuid)

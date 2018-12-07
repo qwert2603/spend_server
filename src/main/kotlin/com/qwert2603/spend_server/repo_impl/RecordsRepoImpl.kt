@@ -4,6 +4,7 @@ import com.qwert2603.spend_server.db.RemoteDB
 import com.qwert2603.spend_server.db.asNullableArg
 import com.qwert2603.spend_server.entity.*
 import com.qwert2603.spend_server.repo.RecordsRepo
+import com.qwert2603.spend_server.utils.LogUtils
 import com.qwert2603.spend_server.utils.getIntNullable
 import com.qwert2603.spend_server.utils.toSqlDate
 import com.qwert2603.spend_server.utils.toSqlTime
@@ -253,6 +254,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
     @Synchronized
     override fun clearAllRecords() {
+        LogUtils.d("RecordsRepoImpl clearAllRecords")
         remoteDB.execute("DELETE FROM records")
     }
 }
