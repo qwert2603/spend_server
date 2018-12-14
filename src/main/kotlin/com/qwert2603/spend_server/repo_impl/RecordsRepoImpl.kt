@@ -4,10 +4,7 @@ import com.qwert2603.spend_server.db.RemoteDB
 import com.qwert2603.spend_server.db.asNullableArg
 import com.qwert2603.spend_server.entity.*
 import com.qwert2603.spend_server.repo.RecordsRepo
-import com.qwert2603.spend_server.utils.LogUtils
-import com.qwert2603.spend_server.utils.getIntNullable
-import com.qwert2603.spend_server.utils.toSqlDate
-import com.qwert2603.spend_server.utils.toSqlTime
+import com.qwert2603.spend_server.utils.*
 import java.sql.Types
 
 class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
@@ -250,6 +247,22 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                 )
             }
         }
+
+        remoteDB.execute("ALTER SEQUENCE record_types_id_seq RESTART WITH ${SpendServerConst.RECORD_TYPE_IDS.size + 1};")
+
+        val maxCategoryChangeId = dump.categories
+                .map { it.changeId }
+                .max()
+                ?.let { it + 1 }
+                ?: 1
+        remoteDB.execute("ALTER SEQUENCE category_change_id_seq RESTART WITH $maxCategoryChangeId;")
+
+        val maxRecordChangeId = dump.records
+                .map { it.changeId }
+                .max()
+                ?.let { it + 1 }
+                ?: 1
+        remoteDB.execute("ALTER SEQUENCE record_change_id_seq RESTART WITH $maxRecordChangeId;")
     }
 
     @Synchronized
