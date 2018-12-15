@@ -1,9 +1,13 @@
 package com.qwert2603.spend_server.entity
 
+import com.qwert2603.spend_server.utils.sha256
+
 data class Dump(
         val categories: List<RecordCategoryDump>,
         val records: List<RecordDump>
-)
+) {
+    val hash = toString().sha256()
+}
 
 data class RecordDump(
         val uuid: String,

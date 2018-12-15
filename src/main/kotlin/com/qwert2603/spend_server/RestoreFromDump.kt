@@ -3,13 +3,11 @@ package com.qwert2603.spend_server
 import com.google.gson.Gson
 import com.qwert2603.spend_server.db.RemoteDBImpl
 import com.qwert2603.spend_server.entity.Dump
-import com.qwert2603.spend_server.env.E
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
 import com.qwert2603.spend_server.utils.LogUtils
+import com.qwert2603.spend_server.utils.isServerRunning
 import java.io.FileReader
-import java.net.BindException
-import java.net.ServerSocket
 
 //data class JRecord(
 //        val uuid: String,
@@ -43,12 +41,6 @@ import java.net.ServerSocket
 //    recordsRepo.saveRecords(jRecords.map { it.toRecord() })
 //}
 
-private fun isServerRunning() = try {
-    ServerSocket(E.env.port).close()
-    false
-} catch (e: BindException) {
-    true
-}
 
 fun main() {
     if (isServerRunning()) {
@@ -64,4 +56,6 @@ fun main() {
 
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
     recordsRepo.restoreDump(dump)
+
+    LogUtils.d(recordsRepo.getDump().hash)
 }
