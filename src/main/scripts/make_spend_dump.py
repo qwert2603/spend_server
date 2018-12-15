@@ -12,6 +12,8 @@ from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 
 
+# todo: /home/alex/spend_dump/spend/make_spend_dump.py
+# in cron need full path.
 credentials_file = open('credentials.txt', 'r')
 lines = credentials_file.read().splitlines()
 mail_user = lines[1]
