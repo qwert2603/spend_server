@@ -66,7 +66,7 @@ try:
     response = urllib.request.urlopen(url)
     response_string = response.read().decode("utf-8")
     hash_code = json.loads(response_string).get('hash')
-    filename = '{}/{} {} {}.json'.format(dumps_dir, name, now_string, hash_code)
+    filename = '{}/{} {} {}.json'.format(dumps_dir, name, now_string, hash_code[:12])
     write_file = open(filename, 'w')
     write_file.write(response_string)
     write_file.close()
