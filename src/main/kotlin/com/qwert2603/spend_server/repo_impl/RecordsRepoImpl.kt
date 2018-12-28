@@ -144,8 +144,11 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     }
 
     @Synchronized
-    override fun getRecordsCount(): Int {
-        return remoteDB.query("SELECT COUNT (*) FROM records WHERE NOT DELETED", { it.getInt(1) }).first()
+    override fun getRecordsCount(): RecordsCount {
+        return RecordsCount(
+                records = remoteDB.query("SELECT COUNT (*) FROM records WHERE NOT DELETED", { it.getInt(1) }).first(),
+                deleted = remoteDB.query("SELECT COUNT (*) FROM records WHERE DELETED", { it.getInt(1) }).first()
+        )
     }
 
     @Synchronized

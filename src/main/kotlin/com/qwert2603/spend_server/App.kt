@@ -29,7 +29,7 @@ fun Route.api_v2_0() {
     get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
 
     get("records_count") {
-        call.respond(mapOf("count" to recordsRepo.getRecordsCount()))
+        call.respond(recordsRepo.getRecordsCount())
     }
 
     get("dump") {
