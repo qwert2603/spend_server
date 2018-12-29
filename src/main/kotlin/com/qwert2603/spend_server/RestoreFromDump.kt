@@ -42,13 +42,18 @@ import java.io.FileReader
 //}
 
 
-fun main() {
+fun main(args: Array<String>) {
     if (isServerRunning()) {
         LogUtils.e("server is running!")
         return
     }
 
-    val filename = "/file"// "/home/alex/spend_dump/dumps/2018-12-01 19:18:46.json"
+    if (args.isEmpty()) {
+        LogUtils.e("filename is not specified!")
+        return
+    }
+
+    val filename = args[0] //"/file"// "/home/alex/spend_dump/dumps/2018-12-01 19:18:46.json"
     val fileReader = FileReader(filename)
     val json = fileReader.use { it.readText() }
     val dump = Gson().fromJson(json, Dump::class.java)
