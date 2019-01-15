@@ -57,7 +57,6 @@ fun main(args: Array<String>) {
     val fileReader = FileReader(filename)
     val json = fileReader.use { it.readText() }
     val dump = Gson().fromJson(json, Dump::class.java)
-    LogUtils.d("${dump.categories.size} ${dump.records.size}")
 
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
     recordsRepo.restoreDump(dump)

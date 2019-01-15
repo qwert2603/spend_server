@@ -100,6 +100,8 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     override fun saveRecords(records: List<Record>) {
         if (records.isEmpty()) return
 
+        LogUtils.d("RecordsRepoImpl saveRecords $records")
+
         val sb = StringBuilder("INSERT INTO records (uuid, record_category_uuid, date, time, kind, value, change_id) VALUES ")
         repeat(records.size) { sb.append("(?, ?, ?, ?, ?, ?, DEFAULT),") }
         sb.deleteCharAt(sb.lastIndex) // remove last ','.
@@ -132,6 +134,8 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     @Synchronized
     override fun deleteRecords(uuids: List<String>) {
         if (uuids.isEmpty()) return
+
+        LogUtils.d("RecordsRepoImpl deleteRecords $uuids")
 
         val sb = StringBuilder("""
             UPDATE records
@@ -204,6 +208,8 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
     @Synchronized
     override fun restoreDump(dump: Dump) {
+        LogUtils.d("RecordsRepoImpl restoreDump ${dump.categories.size} ${dump.records.size}")
+
         remoteDB.execute("DELETE FROM records")
         remoteDB.execute("DELETE FROM record_categories")
 

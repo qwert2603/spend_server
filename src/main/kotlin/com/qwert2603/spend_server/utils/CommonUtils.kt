@@ -11,12 +11,6 @@ fun ResultSet.getIntNullable(columnLabel: String): Int? = this
         .getInt(columnLabel)
         .takeIf { getObject(columnLabel) != null }
 
-fun Int.applyRange(intRange: IntRange) = when {
-    this < intRange.first -> intRange.first
-    this > intRange.last -> intRange.last
-    else -> this
-}
-
 fun Int.toSqlDate(): java.sql.Date {
     val year = this / (100 * 100)
     val month = this / 100 % 100

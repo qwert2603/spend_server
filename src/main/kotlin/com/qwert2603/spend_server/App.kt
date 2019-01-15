@@ -8,7 +8,6 @@ import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
 import com.qwert2603.spend_server.utils.LogUtils
 import com.qwert2603.spend_server.utils.SpendServerConst
-import com.qwert2603.spend_server.utils.applyRange
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -58,7 +57,7 @@ fun Route.api_v2_0() {
                         ?: 0L,
                 count = receiveParameters["count"]
                         ?.toIntOrNull()
-                        ?.applyRange(0..SpendServerConst.MAX_ITEMS_UPDATES_COUNT)
+                        ?.coerceIn(0..SpendServerConst.MAX_ITEMS_UPDATES_COUNT)
                         ?: 10
         ))
     }
