@@ -2,6 +2,7 @@ package com.qwert2603.spend_server
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.qwert2603.spend_server.db.RemoteDBImpl
+import com.qwert2603.spend_server.entity.BriefInfo
 import com.qwert2603.spend_server.entity.SaveRecordsParam
 import com.qwert2603.spend_server.env.E
 import com.qwert2603.spend_server.repo.RecordsRepo
@@ -27,16 +28,15 @@ fun Route.api_v2_0() {
     get("get_500") { throw Exception("500 done!") }
     get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
 
-    get("records_count") {
-        call.respond(recordsRepo.getRecordsCount())
+    get("brief_info") {
+        call.respond(BriefInfo(
+                recordsCount = recordsRepo.getRecordsCount(),
+                hashesDump = recordsRepo.getDump().hashes
+        ))
     }
 
     get("dump") {
         call.respond(recordsRepo.getDump())
-    }
-
-    get("hashes") {
-        call.respond(recordsRepo.getDump().hashes)
     }
 
     get("clear_all_records") {

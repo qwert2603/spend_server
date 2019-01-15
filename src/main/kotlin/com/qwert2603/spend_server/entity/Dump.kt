@@ -35,11 +35,6 @@ data class RecordCategoryDump(
         val changeId: Long
 )
 
-data class HashesDump(
-        val hash: String,
-        val notDeletedRecordsHash: String
-)
-
 data class NotDeletedRecord(
         val uuid: String,
         val recordCategoryUuid: String,
