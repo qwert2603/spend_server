@@ -10,6 +10,7 @@ data class Dump(
             hash = toString().sha256(),
             notDeletedRecordsHash = records
                     .filter { !it.deleted }
+                    .sortedBy { it.uuid }
                     .map { it.toNotDeletedRecord() }
                     .toString()
                     .sha256()
