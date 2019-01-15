@@ -65,12 +65,16 @@ def send_email(subject, text, filename):
 try:
     response = urllib.request.urlopen(url)
     response_string = response.read().decode("utf-8")
-    hash_code = json.loads(response_string).get('hash')
-    filename = '{}/{} {} {}.json'.format(dumps_dir, name, now_string, hash_code[:12])
+    hashes = json.loads(response_string).get('hashes')
+    hash_code = hashes.get('hash')
+    not_deleted_records_hash = hashes.get('notDeletedRecordsHash')
+    filename = '{}/{} {} {}_{}.json'.format(dumps_dir, name, now_string,
+        hash_code[:8], not_deleted_records_hash[:8])
     write_file = open(filename, 'w')
     write_file.write(response_string)
     write_file.close()
-    b = send_email('{} dump success'.format(name), 'dump of {} {}'.format(now_string, hash_code), filename)
+    b = send_email('{} dump success'.format(name), 'dump of {} {}_{}'
+        .format(now_string, hash_code[:8], not_deleted_records_hash[:8]), filename)
     if b: print('ok')
     else: print('not ok')
 except Exception as e:
