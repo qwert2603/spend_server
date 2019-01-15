@@ -61,5 +61,5 @@ fun main(args: Array<String>) {
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
     recordsRepo.restoreDump(dump)
 
-    LogUtils.d(recordsRepo.getDump().hash)
+    LogUtils.d("dump's hashes = ${recordsRepo.getDump().hashes}")
 }

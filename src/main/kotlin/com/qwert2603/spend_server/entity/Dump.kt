@@ -6,7 +6,14 @@ data class Dump(
         val categories: List<RecordCategoryDump>,
         val records: List<RecordDump>
 ) {
-    val hash = toString().sha256()
+    val hashes = HashesDump(
+            hash = toString().sha256(),
+            notDeletedRecordsHash = records
+                    .filter { !it.deleted }
+                    .map { it.toNotDeletedRecord() }
+                    .toString()
+                    .sha256()
+    )
 }
 
 data class RecordDump(
@@ -25,4 +32,27 @@ data class RecordCategoryDump(
         val recordTypeId: Long,
         val name: String,
         val changeId: Long
+)
+
+data class HashesDump(
+        val hash: String,
+        val notDeletedRecordsHash: String
+)
+
+data class NotDeletedRecord(
+        val uuid: String,
+        val recordCategoryUuid: String,
+        val date: Int,
+        val time: Int?,
+        val kind: String,
+        val value: Int
+)
+
+fun RecordDump.toNotDeletedRecord() = NotDeletedRecord(
+        uuid = uuid,
+        recordCategoryUuid = recordCategoryUuid,
+        date = date,
+        time = time,
+        kind = kind,
+        value = value
 )

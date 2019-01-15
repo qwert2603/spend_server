@@ -35,6 +35,10 @@ fun Route.api_v2_0() {
         call.respond(recordsRepo.getDump())
     }
 
+    get("hashes") {
+        call.respond(recordsRepo.getDump().hashes)
+    }
+
     get("clear_all_records") {
         if (!E.env.forTesting) {
             call.respond(HttpStatusCode.Forbidden)

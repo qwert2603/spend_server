@@ -14,5 +14,5 @@ fun main() {
 
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
 
-    LogUtils.d(recordsRepo.getDump().hash)
+    LogUtils.d("dump's hashes = ${recordsRepo.getDump().hashes}")
 }
