@@ -9,6 +9,15 @@ import java.sql.Types
 
 class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
+    @Synchronized
+    override fun getUserId(token: String): Long? = remoteDB
+            .query(
+                    sql = "SELECT user_id FROM tokens WHERE token = ? LIMIT 1",
+                    mapper = { it.getLong("user_id") },
+                    args = listOf(token)
+            )
+            .firstOrNull()
+
     private sealed class RecordChange {
         data class Updated(val record: Record) : RecordChange()
         data class Deleted(val uuid: String) : RecordChange()
@@ -16,6 +25,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
     @Synchronized
     override fun getRecordsUpdates(
+            userId: Long,
             lastCategoryChangeId: Long,
             lastRecordChangeId: Long,
             count: Int
@@ -32,7 +42,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                               record_type_id,
                               change_id
                             FROM record_categories
-                            WHERE change_id > ?
+                            WHERE user_id = ? AND change_id > ?
                             ORDER BY change_id
                             LIMIT ?
                         """.trimIndent(),
@@ -46,22 +56,23 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                                     name = it.getString("name")
                             )
                         },
-                        args = listOf(lastCategoryChangeId, count)
+                        args = listOf(userId, lastCategoryChangeId, count)
                 )
 
         val recordsChanges = remoteDB
                 .query(sql = """
-                            SELECT
-                              uuid,
-                              record_category_uuid,
-                              to_char(date, 'YYYYMMDD') AS date,
-                              to_char(time, 'HH24MI')   AS time,
-                              kind,
-                              value,
-                              deleted,
-                              change_id
-                            FROM records
-                            WHERE change_id > ?
+                            SELECT r.uuid,
+                                   record_category_uuid,
+                                   to_char(date, 'YYYYMMDD') AS date,
+                                   to_char(time, 'HH24MI')   AS time,
+                                   kind,
+                                   value,
+                                   deleted,
+                                   r.change_id
+                            FROM records r
+                                   left join record_categories c on r.record_category_uuid = c.uuid
+                            WHERE c.user_id = ?
+                              AND r.change_id > ?
                             ORDER BY change_id
                             LIMIT ?
                             """.trimMargin(),
@@ -82,7 +93,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                                 ))
                             }
                         },
-                        args = listOf(lastRecordChangeId, count - updatedCategories.size)
+                        args = listOf(userId, lastRecordChangeId, count - updatedCategories.size)
                 )
 
         return GetRecordsUpdatesResult(

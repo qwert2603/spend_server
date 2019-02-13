@@ -8,8 +8,11 @@ import com.qwert2603.spend_server.env.E
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
 import com.qwert2603.spend_server.utils.LogUtils
+import com.qwert2603.spend_server.utils.NoTokenException
 import com.qwert2603.spend_server.utils.SpendServerConst
+import com.qwert2603.spend_server.utils.UserNotFoundException
 import io.ktor.application.Application
+import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
@@ -24,6 +27,11 @@ import io.ktor.server.netty.Netty
 
 fun Route.api_v2_0() {
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
+
+    fun ApplicationCall.getUserId(): Long = this
+            .request
+            .let { it.queryParameters["token"] ?: throw NoTokenException() }
+            .let { recordsRepo.getUserId(it) ?: throw UserNotFoundException() }
 
     get("get_500") { throw Exception("500 done!") }
     get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
@@ -51,6 +59,7 @@ fun Route.api_v2_0() {
     get("get_records_updates") {
         val receiveParameters = call.request.queryParameters
         call.respond(recordsRepo.getRecordsUpdates(
+                userId = call.getUserId(),
                 lastCategoryChangeId = receiveParameters["last_category_change_id"]
                         ?.toLongOrNull()
                         ?.takeIf { it >= 0L }
@@ -75,11 +84,17 @@ fun Route.api_v2_0() {
         recordsRepo.deleteRecords(deletedRecordsUuid)
         call.respond(mapOf("result" to "done"))
     }
+
+    get("user_id") {
+        call.respond(mapOf("user_id" to call.getUserId()))
+    }
 }
 
 fun Application.module() {
 
     install(StatusPages) {
+        exception<NoTokenException> { call.respond(HttpStatusCode.BadRequest, "no token") }
+        exception<UserNotFoundException> { call.respond(HttpStatusCode.Unauthorized, "unauthorized") }
         exception<JsonProcessingException> { cause ->
             LogUtils.e(cause)
             call.respond(HttpStatusCode.BadRequest)
@@ -93,15 +108,14 @@ fun Application.module() {
         }
     }
     install(ContentNegotiation) {
-        jackson {
-        }
+        jackson {}
     }
     routing {
         route("api/v2.0/", Route::api_v2_0)
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     embeddedServer(
             factory = Netty,
             port = E.env.port,

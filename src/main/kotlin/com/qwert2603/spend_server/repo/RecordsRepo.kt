@@ -9,10 +9,16 @@ import com.qwert2603.spend_server.entity.RecordsCount
 interface RecordsRepo {
 
     /**
+     * @return user_id or null if not found.
+     */
+    fun getUserId(token: String): Long?
+
+    /**
      * @return list of updated records categories and records updates.
      * both lists sorted by change_id.
      */
     fun getRecordsUpdates(
+            userId: Long,
             lastCategoryChangeId: Long,
             lastRecordChangeId: Long,
             count: Int
