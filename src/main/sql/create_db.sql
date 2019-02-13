@@ -32,6 +32,12 @@ create table users
 
 alter table users owner to postgres;
 
+create unique index users_id_uindex
+	on users (id);
+
+create unique index users_login_uindex
+	on users (login);
+
 create table record_categories
 (
 	uuid text not null
@@ -48,6 +54,15 @@ create table record_categories
 );
 
 alter table record_categories owner to postgres;
+
+create unique index record_kinds_uuid_uindex
+	on record_categories (uuid);
+
+create unique index record_kinds_name_record_type_id_uindex
+	on record_categories (name, record_type_id, user_id);
+
+create index record_categories_user_id_index
+	on record_categories (user_id);
 
 create table records
 (
@@ -70,33 +85,18 @@ alter table records owner to postgres;
 create unique index records_uuid_uindex
 	on records (uuid);
 
-create unique index record_kinds_uuid_uindex
-	on record_categories (uuid);
-
-create unique index record_kinds_name_record_type_id_uindex
-	on record_categories (name, record_type_id, user_id);
-
-create index record_categories_user_id_index
-	on record_categories (user_id);
-
-create unique index users_id_uindex
-	on users (id);
-
-create unique index users_login_uindex
-	on users (login);
-
 create table tokens
 (
 	user_id integer not null
 		constraint tokens_users_id_fk
 			references users,
-	token_hash varchar(64) not null
+	token varchar(64) not null
 );
 
 alter table tokens owner to postgres;
 
 create index tokens_token_hash_index
-	on tokens (token_hash);
+	on tokens (token);
 
 
 
