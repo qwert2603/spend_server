@@ -15,7 +15,7 @@ interface RecordsRepo {
 
     /**
      * @return list of updated records categories and records updates.
-     * both lists sorted by change_id.
+     * both lists are sorted by change_id.
      */
     fun getRecordsUpdates(
             userId: Long,
@@ -24,11 +24,11 @@ interface RecordsRepo {
             count: Int
     ): GetRecordsUpdatesResult
 
-    /** create or update existing records and set "updated" to now. */
-    fun saveRecords(records: List<Record>)
+    /** create or update existing records and update "change_id". */
+    fun saveRecords(userId: Long, records: List<Record>)
 
-    /** set "deleted" to true and "Record.updated" to now. */
-    fun deleteRecords(uuids: List<String>)
+    /** set "deleted" to true and update "Record.change_id". */
+    fun deleteRecords(userId: Long, uuids: List<String>)
 
     /** just for test. */
     fun getRecordsCount(): RecordsCount

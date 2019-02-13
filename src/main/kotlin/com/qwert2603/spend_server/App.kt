@@ -75,13 +75,14 @@ fun Route.api_v2_0() {
         ))
     }
     post("save_records") {
+        val userId = call.getUserId()
         val (updatedRecords, deletedRecordsUuid) = call.receive<SaveRecordsParam>()
         if (updatedRecords.size + deletedRecordsUuid.size > SpendServerConst.MAX_ITEMS_TO_SAVE_COUNT) {
             call.respond(HttpStatusCode.BadRequest)
             return@post
         }
-        recordsRepo.saveRecords(updatedRecords)
-        recordsRepo.deleteRecords(deletedRecordsUuid)
+        recordsRepo.saveRecords(userId, updatedRecords)
+        recordsRepo.deleteRecords(userId, deletedRecordsUuid)
         call.respond(mapOf("result" to "done"))
     }
 

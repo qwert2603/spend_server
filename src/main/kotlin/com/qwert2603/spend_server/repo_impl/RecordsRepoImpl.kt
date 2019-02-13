@@ -108,10 +108,10 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     }
 
     @Synchronized
-    override fun saveRecords(records: List<Record>) {
+    override fun saveRecords(userId: Long, records: List<Record>) {
         if (records.isEmpty()) return
 
-        LogUtils.d("RecordsRepoImpl saveRecords $records")
+        LogUtils.d("RecordsRepoImpl saveRecords $userId $records")
 
         val sb = StringBuilder("INSERT INTO records (uuid, record_category_uuid, date, time, kind, value, change_id) VALUES ")
         repeat(records.size) { sb.append("(?, ?, ?, ?, ?, ?, DEFAULT),") }
@@ -143,19 +143,36 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     }
 
     @Synchronized
-    override fun deleteRecords(uuids: List<String>) {
+    override fun deleteRecords(userId: Long, uuids: List<String>) {
         if (uuids.isEmpty()) return
 
-        LogUtils.d("RecordsRepoImpl deleteRecords $uuids")
+        LogUtils.d("RecordsRepoImpl deleteRecords $userId $uuids")
+
+        val sbFilter = StringBuilder("""select r.uuid
+                from records r
+                       left join record_categories c on r.record_category_uuid = c.uuid
+                where c.user_id = ?
+                  and r.uuid in (
+                """)
+        repeat(uuids.size) { sbFilter.append("?,") }
+        sbFilter[sbFilter.lastIndex] = ')' // replace ',' to ')'.
+
+        val filteredUuids = remoteDB.query(
+                sql = sbFilter.toString(),
+                mapper = { it.getString(1) },
+                args = listOf(userId) + uuids
+        )
+
+        LogUtils.d("RecordsRepoImpl deleteRecords filteredUuids $filteredUuids")
 
         val sb = StringBuilder("""
             UPDATE records
             SET deleted = TRUE, change_id = DEFAULT
             WHERE uuid IN (
             """)
-        repeat(uuids.size) { sb.append("?,") }
+        repeat(filteredUuids.size) { sb.append("?,") }
         sb[sb.lastIndex] = ')' // replace ',' to ')'.
-        remoteDB.execute(sql = sb.toString(), args = uuids)
+        remoteDB.execute(sql = sb.toString(), args = filteredUuids)
     }
 
     @Synchronized
