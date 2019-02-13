@@ -113,8 +113,63 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         LogUtils.d("RecordsRepoImpl saveRecords $userId $records")
 
+        val sbFilter = StringBuilder("""
+            select r.uuid
+            from records r
+                   left join record_categories c on r.record_category_uuid = c.uuid
+            where c.user_id != ?
+              and r.uuid in (
+        """)
+        repeat(records.size) { sbFilter.append("?,") }
+        sbFilter[sbFilter.lastIndex] = ')' // replace ',' to ')'.
+
+        val otherUsersRecordsUuids = remoteDB
+                .query(
+                        sql = sbFilter.toString(),
+                        mapper = { it.getString(1) },
+                        args = listOf(userId) + records.map { it.uuid }
+                )
+                .toHashSet()
+
+        if (otherUsersRecordsUuids.isNotEmpty()) {
+            LogUtils.e("RecordsRepoImpl saveRecords otherUsersRecordsUuids $otherUsersRecordsUuids")
+        }
+
+        val categoriesUuidsToSave = records.map { it.recordCategoryUuid }.distinct()
+
+        val sbFilterCategories = StringBuilder("""
+            select uuid
+            from record_categories
+            where user_id = ?
+              and uuid in (
+        """.trimIndent())
+        repeat(categoriesUuidsToSave.size) { sbFilterCategories.append("?,") }
+        sbFilterCategories[sbFilterCategories.lastIndex] = ')' // replace ',' to ')'.
+
+        val correctCategoriesUuidsToSave = remoteDB
+                .query(
+                        sql = sbFilterCategories.toString(),
+                        mapper = { it.getString(1) },
+                        args = listOf(userId) + categoriesUuidsToSave
+                )
+                .toHashSet()
+
+        if (correctCategoriesUuidsToSave.size != categoriesUuidsToSave.size) {
+            LogUtils.e("RecordsRepoImpl saveRecords not correct categories to save ${categoriesUuidsToSave - correctCategoriesUuidsToSave}")
+        }
+
+        val filteredRecords = records
+                .filter {
+                    it.uuid !in otherUsersRecordsUuids
+                            && it.recordCategoryUuid in correctCategoriesUuidsToSave
+                }
+
+        LogUtils.d("RecordsRepoImpl saveRecords filteredRecords $filteredRecords")
+
+        if (filteredRecords.isEmpty()) return
+
         val sb = StringBuilder("INSERT INTO records (uuid, record_category_uuid, date, time, kind, value, change_id) VALUES ")
-        repeat(records.size) { sb.append("(?, ?, ?, ?, ?, ?, DEFAULT),") }
+        repeat(filteredRecords.size) { sb.append("(?, ?, ?, ?, ?, ?, DEFAULT),") }
         sb.deleteCharAt(sb.lastIndex) // remove last ','.
         sb.append("""
             ON CONFLICT (uuid) DO UPDATE SET
@@ -127,7 +182,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
         """.trimIndent())
         remoteDB.execute(
                 sql = sb.toString(),
-                args = records
+                args = filteredRecords
                         .map {
                             listOf(
                                     it.uuid,
@@ -148,12 +203,13 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         LogUtils.d("RecordsRepoImpl deleteRecords $userId $uuids")
 
-        val sbFilter = StringBuilder("""select r.uuid
-                from records r
-                       left join record_categories c on r.record_category_uuid = c.uuid
-                where c.user_id = ?
-                  and r.uuid in (
-                """)
+        val sbFilter = StringBuilder("""
+            select r.uuid
+            from records r
+                   left join record_categories c on r.record_category_uuid = c.uuid
+            where c.user_id = ?
+              and r.uuid in (
+        """)
         repeat(uuids.size) { sbFilter.append("?,") }
         sbFilter[sbFilter.lastIndex] = ')' // replace ',' to ')'.
 
@@ -163,13 +219,17 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                 args = listOf(userId) + uuids
         )
 
-        LogUtils.d("RecordsRepoImpl deleteRecords filteredUuids $filteredUuids")
+        if (filteredUuids.size != uuids.size) {
+            LogUtils.e("RecordsRepoImpl deleteRecords not correct uuids ${uuids - filteredUuids}")
+        }
+
+        if (filteredUuids.isEmpty()) return
 
         val sb = StringBuilder("""
             UPDATE records
             SET deleted = TRUE, change_id = DEFAULT
             WHERE uuid IN (
-            """)
+        """)
         repeat(filteredUuids.size) { sb.append("?,") }
         sb[sb.lastIndex] = ')' // replace ',' to ')'.
         remoteDB.execute(sql = sb.toString(), args = filteredUuids)
