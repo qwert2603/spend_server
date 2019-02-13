@@ -116,7 +116,7 @@ fun Application.module() {
     }
 }
 
-fun main() {
+fun main(args: Array<String>) {
     embeddedServer(
             factory = Netty,
             port = E.env.port,
