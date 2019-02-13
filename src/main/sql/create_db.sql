@@ -64,6 +64,9 @@ create unique index record_kinds_name_record_type_id_uindex
 create index record_categories_user_id_index
 	on record_categories (user_id);
 
+create unique index record_categories_change_id_uindex
+	on record_categories (change_id);
+
 create table records
 (
 	uuid text not null
@@ -84,6 +87,9 @@ alter table records owner to postgres;
 
 create unique index records_uuid_uindex
 	on records (uuid);
+
+create unique index records_change_id_uindex
+	on records (change_id);
 
 create table tokens
 (
