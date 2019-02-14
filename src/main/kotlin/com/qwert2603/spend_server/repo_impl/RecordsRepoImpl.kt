@@ -288,28 +288,61 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
     @Synchronized
     override fun restoreDump(dump: Dump) {
-        LogUtils.d("RecordsRepoImpl restoreDump ${dump.categories.size} ${dump.records.size}")
+        LogUtils.d("RecordsRepoImpl restoreDump ${dump.users.size} ${dump.tokens.size} ${dump.categories.size} ${dump.records.size}")
 
         remoteDB.execute("DELETE FROM records")
         remoteDB.execute("DELETE FROM record_categories")
+        remoteDB.execute("DELETE FROM tokens")
+        remoteDB.execute("DELETE FROM users")
+
+        if (dump.users.isNotEmpty()) {
+            dump.users.chunked(1000).forEach { chunk ->
+                val sb = StringBuilder("INSERT INTO users (id, login) VALUES  ")
+                repeat(chunk.size) { sb.append("(?, ?),") }
+                sb.deleteCharAt(sb.lastIndex) // remove last ','.
+                remoteDB.execute(
+                        sql = sb.toString(),
+                        args = chunk
+                                .map { listOf(it.id, it.login) }
+                                .flatten()
+                )
+            }
+        }
+
+        if (dump.tokens.isNotEmpty()) {
+            dump.tokens.chunked(1000).forEach { chunk ->
+                val sb = StringBuilder("INSERT INTO tokens (user_id, token) VALUES  ")
+                repeat(chunk.size) { sb.append("(?, ?),") }
+                sb.deleteCharAt(sb.lastIndex) // remove last ','.
+                remoteDB.execute(
+                        sql = sb.toString(),
+                        args = chunk
+                                .map { listOf(it.userId, it.token) }
+                                .flatten()
+                )
+            }
+        }
 
         if (dump.categories.isNotEmpty()) {
-            val sb = StringBuilder("INSERT INTO record_categories (uuid, name, record_type_id, change_id) VALUES ")
-            repeat(dump.categories.size) { sb.append("(?, ?, ?, ?),") }
-            sb.deleteCharAt(sb.lastIndex) // remove last ','.
-            remoteDB.execute(
-                    sql = sb.toString(),
-                    args = dump.categories
-                            .map {
-                                listOf(
-                                        it.uuid,
-                                        it.name,
-                                        it.recordTypeId,
-                                        it.changeId
-                                )
-                            }
-                            .flatten()
-            )
+            dump.categories.chunked(1000).forEach { chunk ->
+                val sb = StringBuilder("INSERT INTO record_categories (uuid, user_id, name, record_type_id, change_id) VALUES ")
+                repeat(chunk.size) { sb.append("(?, ?, ?, ?, ?),") }
+                sb.deleteCharAt(sb.lastIndex) // remove last ','.
+                remoteDB.execute(
+                        sql = sb.toString(),
+                        args = chunk
+                                .map {
+                                    listOf(
+                                            it.uuid,
+                                            it.userId,
+                                            it.name,
+                                            it.recordTypeId,
+                                            it.changeId
+                                    )
+                                }
+                                .flatten()
+                )
+            }
         }
 
         if (dump.records.isNotEmpty()) {
@@ -341,17 +374,21 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         val maxCategoryChangeId = dump.categories
                 .map { it.changeId }
-                .max()
-                ?.let { it + 1 }
-                ?: 1
+                .let { it.max() ?: 0 }
+                .plus(1)
         remoteDB.execute("ALTER SEQUENCE category_change_id_seq RESTART WITH $maxCategoryChangeId;")
 
         val maxRecordChangeId = dump.records
                 .map { it.changeId }
-                .max()
-                ?.let { it + 1 }
-                ?: 1
+                .let { it.max() ?: 0 }
+                .plus(1)
         remoteDB.execute("ALTER SEQUENCE record_change_id_seq RESTART WITH $maxRecordChangeId;")
+
+        val maxUserId = dump.users
+                .map { it.id }
+                .let { it.max() ?: 0 }
+                .plus(1)
+        remoteDB.execute("ALTER SEQUENCE users_id_seq RESTART WITH $maxUserId;")
     }
 
     @Synchronized
