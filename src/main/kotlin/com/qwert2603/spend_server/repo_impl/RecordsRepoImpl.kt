@@ -115,22 +115,8 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         LogUtils.d("RecordsRepoImpl saveRecords $userId $records")
 
-        val sbFilter = StringBuilder("""
-            select r.uuid
-            from records r
-                   left join record_categories c on r.record_category_uuid = c.uuid
-            where c.user_id != ?
-              and r.uuid in (
-        """)
-        repeat(records.size) { sbFilter.append("?,") }
-        sbFilter[sbFilter.lastIndex] = ')' // replace ',' to ')'.
-
-        val otherUsersRecordsUuids = remoteDB
-                .query(
-                        sql = sbFilter.toString(),
-                        mapper = { it.getString(1) },
-                        args = listOf(userId) + records.map { it.uuid }
-                )
+        val otherUsersRecordsUuids = recordsDbHelper
+                .getOtherUsersRecordsUuids(userId, records.map { it.uuid })
                 .toHashSet()
 
         if (otherUsersRecordsUuids.isNotEmpty()) {
@@ -139,21 +125,8 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         val categoriesUuidsToSave = records.map { it.recordCategoryUuid }.distinct()
 
-        val sbFilterCategories = StringBuilder("""
-            select uuid
-            from record_categories
-            where user_id = ?
-              and uuid in (
-        """.trimIndent())
-        repeat(categoriesUuidsToSave.size) { sbFilterCategories.append("?,") }
-        sbFilterCategories[sbFilterCategories.lastIndex] = ')' // replace ',' to ')'.
-
-        val correctCategoriesUuidsToSave = remoteDB
-                .query(
-                        sql = sbFilterCategories.toString(),
-                        mapper = { it.getString(1) },
-                        args = listOf(userId) + categoriesUuidsToSave
-                )
+        val correctCategoriesUuidsToSave = recordsDbHelper
+                .getUsersCategoriesUuids(userId, categoriesUuidsToSave)
                 .toHashSet()
 
         if (correctCategoriesUuidsToSave.size != categoriesUuidsToSave.size) {
@@ -219,7 +192,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                             SET deleted = TRUE, change_id = DEFAULT
                             WHERE uuid IN
                         """)
-                        .also { it.appendParams(filteredUuids.size) }
+                        .appendParams(filteredUuids.size)
                         .toString(),
                 args = filteredUuids
         )
