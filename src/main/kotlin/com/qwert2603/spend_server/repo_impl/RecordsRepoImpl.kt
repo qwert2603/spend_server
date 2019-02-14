@@ -236,17 +236,18 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         val categories = remoteDB
                 .query(sql = """
-                        SELECT
-                          uuid,
-                          name,
-                          record_type_id,
-                          change_id
+                        SELECT uuid,
+                               name,
+                               user_id,
+                               record_type_id,
+                               change_id
                         FROM record_categories
-                        ORDER BY record_type_id, uuid
+                        ORDER BY user_id, record_type_id, uuid
                         """.trimMargin(),
                         mapper = {
                             RecordCategoryDump(
                                     uuid = it.getString("uuid"),
+                                    userId = it.getLong("user_id"),
                                     recordTypeId = it.getLong("record_type_id"),
                                     name = it.getString("name"),
                                     changeId = it.getLong("change_id")
@@ -254,7 +255,35 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                         }
                 )
 
-        return Dump(categories, records)
+        val users = remoteDB.query(
+                sql = """
+                    select id, login
+                    from users
+                    order by id
+                """.trimIndent(),
+                mapper = {
+                    UserDump(
+                            id = it.getLong("id"),
+                            login = it.getString("login")
+                    )
+                }
+        )
+
+        val tokens = remoteDB.query(
+                sql = """
+                    select user_id, token
+                    from tokens
+                    order by user_id, token
+                """.trimIndent(),
+                mapper = {
+                    TokenDump(
+                            userId = it.getLong("user_id"),
+                            token = it.getString("token")
+                    )
+                }
+        )
+
+        return Dump(categories, records, users, tokens)
     }
 
     @Synchronized

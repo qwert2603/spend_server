@@ -4,16 +4,20 @@ import com.qwert2603.spend_server.utils.sha256
 
 data class Dump(
         val categories: List<RecordCategoryDump>,
-        val records: List<RecordDump>
+        val records: List<RecordDump>,
+        val users: List<UserDump>,
+        val tokens: List<TokenDump>
 ) {
+    private val categoriesByUuid: Map<String, RecordCategoryDump> = categories.associateBy { it.uuid }
+    private val usersById: Map<Long, UserDump> = users.associateBy { it.id }
+
     val hashes = HashesDump(
             hash = toString().sha256(),
-            notDeletedRecordsHash = records
-                    .filter { !it.deleted }
-                    .sortedBy { it.uuid }
-                    .map { it.toNotDeletedRecord() }
-                    .toString()
-                    .sha256()
+            notDeletedRecordsHash = records.getNotDeletedRecordsHash(),
+            notDeletedRecordsHashByUser = records
+                    .groupBy { categoriesByUuid.getValue(it.recordCategoryUuid).userId }
+                    .mapKeys { usersById.getValue(it.key).login }
+                    .mapValues { it.value.getNotDeletedRecordsHash() }
     )
 }
 
@@ -30,9 +34,20 @@ data class RecordDump(
 
 data class RecordCategoryDump(
         val uuid: String,
+        val userId: Long,
         val recordTypeId: Long,
         val name: String,
         val changeId: Long
+)
+
+data class UserDump(
+        val id: Long,
+        val login: String
+)
+
+data class TokenDump(
+        val userId: Long,
+        val token: String
 )
 
 data class NotDeletedRecord(
@@ -44,7 +59,7 @@ data class NotDeletedRecord(
         val value: Int
 )
 
-fun RecordDump.toNotDeletedRecord() = NotDeletedRecord(
+private fun RecordDump.toNotDeletedRecord() = NotDeletedRecord(
         uuid = uuid,
         recordCategoryUuid = recordCategoryUuid,
         date = date,
@@ -52,3 +67,10 @@ fun RecordDump.toNotDeletedRecord() = NotDeletedRecord(
         kind = kind,
         value = value
 )
+
+private fun List<RecordDump>.getNotDeletedRecordsHash() = this
+        .filter { !it.deleted }
+        .sortedBy { it.uuid }
+        .map { it.toNotDeletedRecord() }
+        .toString()
+        .sha256()
