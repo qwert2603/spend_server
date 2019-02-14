@@ -53,3 +53,9 @@ fun String.sha256(): String {
 
     return hexString.toString()
 }
+
+fun StringBuilder.appendParams(count: Int) {
+    append('(')
+    repeat(count) { append("?,") }
+    this[lastIndex] = ')' // replace ',' to ')'.
+}
