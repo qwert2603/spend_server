@@ -42,12 +42,16 @@ data class RecordCategoryDump(
 
 data class UserDump(
         val id: Long,
-        val login: String
+        val login: String,
+        val deleted: Boolean,
+        val passwordHash: String
 )
 
 data class TokenDump(
         val userId: Long,
-        val token: String
+        val tokenHash: String,
+        val expires: Long,
+        val lastUse: Long
 )
 
 data class NotDeletedRecord(

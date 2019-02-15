@@ -33,6 +33,8 @@ fun Int.toSqlTime(): java.sql.Time {
             .let { java.sql.Time(it) }
 }
 
+fun Long.toSqlTimestamp() = java.sql.Timestamp(this)
+
 fun isServerRunning() = try {
     ServerSocket(E.env.port).close()
     false

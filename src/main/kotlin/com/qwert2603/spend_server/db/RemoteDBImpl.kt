@@ -81,6 +81,7 @@ class RemoteDBImpl : RemoteDB {
                 is String -> setString(index, any)
                 is java.sql.Date -> setDate(index, any)
                 is java.sql.Time -> setTime(index, any)
+                is java.sql.Timestamp -> setTimestamp(index, any)
                 is Boolean -> setBoolean(index, any)
                 else -> LogUtils.e("RemoteDBImpl unknown arg ${any.javaClass} $any")
             }

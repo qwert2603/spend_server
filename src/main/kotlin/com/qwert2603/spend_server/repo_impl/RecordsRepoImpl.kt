@@ -257,28 +257,32 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         val users = remoteDB.query(
                 sql = """
-                    select id, login
+                    select id, login, deleted, password_hash
                     from users
                     order by id
                 """.trimIndent(),
                 mapper = {
                     UserDump(
                             id = it.getLong("id"),
-                            login = it.getString("login")
+                            login = it.getString("login"),
+                            deleted = it.getBoolean("deleted"),
+                            passwordHash = it.getString("password_hash")
                     )
                 }
         )
 
         val tokens = remoteDB.query(
                 sql = """
-                    select user_id, token
+                    select user_id, token_hash, expires, last_use
                     from tokens
-                    order by user_id, token
+                    order by user_id, token_hash
                 """.trimIndent(),
                 mapper = {
                     TokenDump(
                             userId = it.getLong("user_id"),
-                            token = it.getString("token")
+                            tokenHash = it.getString("token_hash"),
+                            expires = it.getTimestamp("expires").time,
+                            lastUse = it.getTimestamp("last_use").time
                     )
                 }
         )
@@ -297,13 +301,13 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         if (dump.users.isNotEmpty()) {
             dump.users.chunked(1000).forEach { chunk ->
-                val sb = StringBuilder("INSERT INTO users (id, login) VALUES  ")
-                repeat(chunk.size) { sb.append("(?, ?),") }
+                val sb = StringBuilder("INSERT INTO users (id, login, deleted, password_hash) VALUES  ")
+                repeat(chunk.size) { sb.append("(?, ?, ?, ?),") }
                 sb.deleteCharAt(sb.lastIndex) // remove last ','.
                 remoteDB.execute(
                         sql = sb.toString(),
                         args = chunk
-                                .map { listOf(it.id, it.login) }
+                                .map { listOf(it.id, it.login, it.deleted, it.passwordHash) }
                                 .flatten()
                 )
             }
@@ -311,13 +315,20 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
         if (dump.tokens.isNotEmpty()) {
             dump.tokens.chunked(1000).forEach { chunk ->
-                val sb = StringBuilder("INSERT INTO tokens (user_id, token) VALUES  ")
-                repeat(chunk.size) { sb.append("(?, ?),") }
+                val sb = StringBuilder("INSERT INTO tokens (user_id, token_hash, expires, last_use) VALUES  ")
+                repeat(chunk.size) { sb.append("(?, ?, ?, ?),") }
                 sb.deleteCharAt(sb.lastIndex) // remove last ','.
                 remoteDB.execute(
                         sql = sb.toString(),
                         args = chunk
-                                .map { listOf(it.userId, it.token) }
+                                .map {
+                                    listOf(
+                                            it.userId,
+                                            it.tokenHash,
+                                            it.expires.toSqlTimestamp(),
+                                            it.lastUse.toSqlTimestamp()
+                                    )
+                                }
                                 .flatten()
                 )
             }
