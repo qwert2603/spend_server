@@ -11,14 +11,19 @@ data class Dump(
     private val categoriesByUuid: Map<String, RecordCategoryDump> = categories.associateBy { it.uuid }
     private val usersById: Map<Long, UserDump> = users.associateBy { it.id }
 
-    val hashes = HashesDump(
-            hash = toString().sha256(),
-            notDeletedRecordsHash = records.getNotDeletedRecordsHash(),
-            notDeletedRecordsHashByUser = records
-                    .groupBy { categoriesByUuid.getValue(it.recordCategoryUuid).userId }
-                    .mapKeys { usersById.getValue(it.key).login }
-                    .mapValues { it.value.getNotDeletedRecordsHash() }
-    )
+    val hashes by lazy {
+        HashesDump(
+                hash = this
+                        .copy(tokens = emptyList())
+                        .toString()
+                        .sha256(),
+                notDeletedRecordsHash = records.getNotDeletedRecordsHash(),
+                notDeletedRecordsHashByUser = records
+                        .groupBy { categoriesByUuid.getValue(it.recordCategoryUuid).userId }
+                        .mapKeys { usersById.getValue(it.key).login }
+                        .mapValues { it.value.getNotDeletedRecordsHash() }
+        )
+    }
 }
 
 data class RecordDump(
