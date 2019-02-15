@@ -232,7 +232,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
     override fun saveRecords(userId: Long, records: List<Record>) {
         if (records.isEmpty()) return
 
-        LogUtils.d("RecordsRepoImpl saveRecords $userId $records")
+//        LogUtils.d("RecordsRepoImpl saveRecords $userId $records")
 
         val otherUsersRecordsUuids = recordsDbHelper
                 .getOtherUsersRecordsUuids(userId, records.map { it.uuid })
@@ -258,7 +258,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                             && it.recordCategoryUuid in correctCategoriesUuidsToSave
                 }
 
-        LogUtils.d("RecordsRepoImpl saveRecords filteredRecords $filteredRecords")
+        LogUtils.d("RecordsRepoImpl saveRecords filteredRecords $userId $filteredRecords")
 
         if (filteredRecords.isEmpty()) return
 
