@@ -1,5 +1,6 @@
 package com.qwert2603.spend_server.repo
 
+import com.qwert2603.spend_server.JDump
 import com.qwert2603.spend_server.entity.Dump
 import com.qwert2603.spend_server.entity.GetRecordsUpdatesResult
 import com.qwert2603.spend_server.entity.Record
@@ -64,6 +65,8 @@ interface RecordsRepo {
     fun getDump(): Dump
 
     fun restoreDump(dump: Dump)
+
+    fun restoreJDump(userId: Long,jDump: JDump)
 
     fun clearAllRecords()
 }

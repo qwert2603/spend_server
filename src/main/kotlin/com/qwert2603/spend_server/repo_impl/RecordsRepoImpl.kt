@@ -1,5 +1,6 @@
 package com.qwert2603.spend_server.repo_impl
 
+import com.qwert2603.spend_server.JDump
 import com.qwert2603.spend_server.db.RemoteDB
 import com.qwert2603.spend_server.db.asNullableArg
 import com.qwert2603.spend_server.entity.*
@@ -518,6 +519,56 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                 .let { it.max() ?: 0 }
                 .plus(1)
         remoteDB.execute("ALTER SEQUENCE users_id_seq RESTART WITH $maxUserId;")
+    }
+
+    @Synchronized
+    override fun restoreJDump(userId: Long, jDump: JDump) {
+        LogUtils.d("RecordsRepoImpl restoreJDump ${jDump.categories.size} ${jDump.records.size}")
+
+        if (jDump.categories.isNotEmpty()) {
+            jDump.categories.chunked(1000).forEach { chunk ->
+                val sb = StringBuilder("INSERT INTO record_categories (uuid, user_id, name, record_type_id, change_id) VALUES ")
+                repeat(chunk.size) { sb.append("(?, ?, ?, ?, DEFAULT),") }
+                sb.deleteCharAt(sb.lastIndex) // remove last ','.
+                remoteDB.execute(
+                        sql = sb.toString(),
+                        args = chunk
+                                .map {
+                                    listOf(
+                                            it.uuid,
+                                            userId,
+                                            it.name,
+                                            it.recordTypeId
+                                    )
+                                }
+                                .flatten()
+                )
+            }
+        }
+
+        if (jDump.records.isNotEmpty()) {
+            jDump.records.chunked(1000).forEach { chunk ->
+                val sb = StringBuilder("INSERT INTO records (uuid, record_category_uuid, date, time, kind, value, change_id, deleted) VALUES ")
+                repeat(chunk.size) { sb.append("(?, ?, ?, ?, ?, ?, DEFAULT, ?),") }
+                sb.deleteCharAt(sb.lastIndex) // remove last ','.
+                remoteDB.execute(
+                        sql = sb.toString(),
+                        args = chunk
+                                .map {
+                                    listOf(
+                                            it.uuid,
+                                            it.recordCategoryUuid,
+                                            it.date.toSqlDate(),
+                                            it.time?.toSqlTime().asNullableArg(Types.TIME),
+                                            it.kind,
+                                            it.value,
+                                            it.deleted
+                                    )
+                                }
+                                .flatten()
+                )
+            }
+        }
     }
 
     @Synchronized
