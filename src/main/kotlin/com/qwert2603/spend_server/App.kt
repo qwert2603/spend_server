@@ -36,10 +36,17 @@ fun Route.api_v2_0() {
             .getHashedToken()
             .let { recordsRepo.getUserId(it) ?: throw UserNotFoundException() }
 
+    fun ApplicationCall.checkSudoUser() {
+        if (this.getUserId() != E.env.sudoUserId) {
+            throw ForbiddenException()
+        }
+    }
+
     get("get_500") { throw Exception("500 done!") }
     get("get_401") { call.respond(HttpStatusCode.Unauthorized) }
 
     get("brief_info") {
+        call.checkSudoUser()
         call.respond(BriefInfo(
                 recordsCount = recordsRepo.getRecordsCount(),
                 hashesDump = recordsRepo.getDump().hashes
@@ -47,10 +54,12 @@ fun Route.api_v2_0() {
     }
 
     get("dump") {
+        call.checkSudoUser()
         call.respond(recordsRepo.getDump())
     }
 
     get("clear_all_records") {
+        call.checkSudoUser()
         if (!E.env.forTesting) {
             call.respond(HttpStatusCode.Forbidden)
             return@get
@@ -129,6 +138,7 @@ fun Application.module() {
     install(StatusPages) {
         exception<NoTokenException> { call.respond(HttpStatusCode.BadRequest, "no token") }
         exception<UserNotFoundException> { call.respond(HttpStatusCode.Unauthorized, "unauthorized") }
+        exception<ForbiddenException> { call.respond(HttpStatusCode.Forbidden, "forbidden") }
         exception<JsonProcessingException> { cause ->
             LogUtils.e(cause)
             call.respond(HttpStatusCode.BadRequest)

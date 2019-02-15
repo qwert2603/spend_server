@@ -9,6 +9,7 @@ abstract class EnvInterface {
     abstract val port: Int
     abstract val forTesting: Boolean
     open var salt: String? = null
+    open var sudoUserId: Long? = null
 }
 
 private object Test : EnvInterface() {
@@ -16,6 +17,7 @@ private object Test : EnvInterface() {
     override val port = 8359
     override val forTesting = true
     override var salt: String? = "salt"
+    override var sudoUserId: Long? = 2
 }
 
 private object Prod : EnvInterface() {
