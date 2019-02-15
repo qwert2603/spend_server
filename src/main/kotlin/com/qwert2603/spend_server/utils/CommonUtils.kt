@@ -62,3 +62,11 @@ fun StringBuilder.appendParams(count: Int): StringBuilder {
     this[lastIndex] = ')' // replace ',' to ')'.
     return this
 }
+
+fun String.hashWithSalt(): String {
+    var result = this
+    for (i in 1..256) {
+        result = "$result${E.env.salt}".sha256()
+    }
+    return result
+}

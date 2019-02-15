@@ -3,6 +3,8 @@ package com.qwert2603.spend_server.utils
 import com.qwert2603.spend_server.env.E
 
 object SpendServerConst {
+    const val TOKEN_EXPIRES_DAYS = 42
+
     const val MAX_TYPE_LENGTH = 64
     const val MAX_CATEGORY_NAME_LENGTH = 64
     const val MAX_RECORD_KIND_LENGTH = 64

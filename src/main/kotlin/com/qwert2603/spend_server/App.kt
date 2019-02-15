@@ -3,14 +3,13 @@ package com.qwert2603.spend_server
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.qwert2603.spend_server.db.RemoteDBImpl
 import com.qwert2603.spend_server.entity.BriefInfo
+import com.qwert2603.spend_server.entity.LoginParams
+import com.qwert2603.spend_server.entity.RegisterParams
 import com.qwert2603.spend_server.entity.SaveRecordsParam
 import com.qwert2603.spend_server.env.E
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
-import com.qwert2603.spend_server.utils.LogUtils
-import com.qwert2603.spend_server.utils.NoTokenException
-import com.qwert2603.spend_server.utils.SpendServerConst
-import com.qwert2603.spend_server.utils.UserNotFoundException
+import com.qwert2603.spend_server.utils.*
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -28,9 +27,13 @@ import io.ktor.server.netty.Netty
 fun Route.api_v2_0() {
     val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
 
-    fun ApplicationCall.getUserId(): Long = this
+    fun ApplicationCall.getHashedToken(): String = this
             .request
             .let { it.queryParameters["token"] ?: throw NoTokenException() }
+            .hashWithSalt()
+
+    fun ApplicationCall.getUserId(): Long = this
+            .getHashedToken()
             .let { recordsRepo.getUserId(it) ?: throw UserNotFoundException() }
 
     get("get_500") { throw Exception("500 done!") }
@@ -89,6 +92,36 @@ fun Route.api_v2_0() {
     get("user_id") {
         call.respond(mapOf("user_id" to call.getUserId()))
     }
+
+    post("register") {
+        val (login, password) = call.receive<RegisterParams>()
+        val token = recordsRepo.register(login, password)
+        if (token != null) {
+            call.respond(mapOf("token" to token))
+        } else {
+            call.respond(HttpStatusCode.Conflict, "login is used")
+        }
+    }
+
+    post("login") {
+        val (login, password) = call.receive<LoginParams>()
+        val token = recordsRepo.login(login, password)
+        if (token != null) {
+            call.respond(mapOf("token" to token))
+        } else {
+            call.respond(HttpStatusCode.Forbidden)
+        }
+    }
+
+    post("logout") {
+        recordsRepo.logout(call.getHashedToken())
+        call.respond(mapOf("result" to "logout success"))
+    }
+
+    post("logout_all") {
+        recordsRepo.logoutAll(call.getUserId())
+        call.respond(mapOf("result" to "logout all success"))
+    }
 }
 
 fun Application.module() {
@@ -117,6 +150,15 @@ fun Application.module() {
 }
 
 fun main(args: Array<String>) {
+
+    if (E.env.salt == null) {
+        if (args.isEmpty()) {
+            LogUtils.e("salt is not specified!")
+            return
+        }
+        E.env.salt = args[0]
+    }
+
     embeddedServer(
             factory = Netty,
             port = E.env.port,

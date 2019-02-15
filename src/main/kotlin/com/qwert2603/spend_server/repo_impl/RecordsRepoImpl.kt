@@ -6,19 +6,111 @@ import com.qwert2603.spend_server.entity.*
 import com.qwert2603.spend_server.repo.RecordsRepo
 import com.qwert2603.spend_server.utils.*
 import java.sql.Types
+import java.util.*
 
 class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
     private val recordsDbHelper = RecordsDbHelper(remoteDB)
 
+    private fun createNewToken(): String = UUID.randomUUID().toString()
+
     @Synchronized
-    override fun getUserId(token: String): Long? = remoteDB
+    override fun getUserId(tokenHash: String): Long? = remoteDB
             .query(
-                    sql = "SELECT user_id FROM tokens WHERE token = ? LIMIT 1",
-                    mapper = { it.getLong("user_id") },
-                    args = listOf(token)
+                    sql = """
+                        SELECT u.id
+                        FROM tokens t
+                               left join users u on t.user_id = u.id
+                        WHERE token_hash = ?
+                          and expires > now()
+                          and u.deleted = FALSE
+                        LIMIT 1;
+                    """.trimIndent(),
+                    mapper = { it.getLong(1) },
+                    args = listOf(tokenHash)
             )
             .firstOrNull()
+
+    @Synchronized
+    override fun register(login: String, password: String): String? {
+        val loginIsUsed = remoteDB
+                .query(
+                        sql = "select 1 from users where login = ? limit 1",
+                        mapper = { Unit },
+                        args = listOf(login)
+                )
+                .isNotEmpty()
+
+        if (loginIsUsed) {
+            return null
+        }
+
+        remoteDB.execute(
+                sql = """
+                    insert into users (login, password_hash)
+                    values (?, ?)
+                """.trimIndent(),
+                args = listOf(login, password.hashWithSalt())
+        )
+
+        return login(login, password)
+    }
+
+    @Synchronized
+    override fun login(login: String, password: String): String? {
+
+        val userId: Long = remoteDB
+                .query(
+                        sql = """
+                            select id
+                            from users
+                            where login = ?
+                              and password_hash = ?
+                              and deleted = FALSE
+                            limit 1
+                        """.trimIndent(),
+                        mapper = { it.getLong(1) },
+                        args = listOf(login, password.hashWithSalt())
+                )
+                .firstOrNull()
+                ?: return null
+
+        val token = createNewToken()
+
+        remoteDB.execute(
+                sql = """
+                    insert into tokens(user_id, token_hash, expires, last_use)
+                    VALUES (?, ?, now() + interval '${SpendServerConst.TOKEN_EXPIRES_DAYS} days', now())
+                """.trimIndent(),
+                args = listOf(userId, token.hashWithSalt())
+        )
+
+        return token
+    }
+
+    @Synchronized
+    override fun logout(tokenHash: String) {
+        remoteDB.execute(
+                sql = "DELETE FROM tokens WHERE token_hash = ?",
+                args = listOf(tokenHash)
+        )
+    }
+
+    @Synchronized
+    override fun logoutAll(userId: Long) {
+        remoteDB.execute(
+                sql = "DELETE FROM tokens WHERE user_id = ?",
+                args = listOf(userId)
+        )
+    }
+
+    @Synchronized
+    override fun setUserDeleted(userId: Long, deleted: Boolean) {
+        remoteDB.execute(
+                sql = "update users set deleted = ? where id = ?",
+                args = listOf(deleted, userId)
+        )
+    }
 
     private sealed class RecordChange {
         data class Updated(val record: Record) : RecordChange()

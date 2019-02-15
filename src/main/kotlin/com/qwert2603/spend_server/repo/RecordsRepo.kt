@@ -9,9 +9,36 @@ import com.qwert2603.spend_server.entity.RecordsCount
 interface RecordsRepo {
 
     /**
-     * @return user_id or null if not found.
+     * @return user_id or null if
+     * - token not found
+     * - or token in expired
+     * - or user is deleted.
      */
-    fun getUserId(token: String): Long?
+    fun getUserId(tokenHash: String): Long?
+
+    /**
+     * create new user and token for him.
+     * @return token or null if login is used already.
+     */
+    fun register(login: String, password: String): String?
+
+    /**
+     * create new token for user with [login] if [password] is correct and user is not deleted.
+     * @return token or null.
+     */
+    fun login(login: String, password: String): String?
+
+    /**
+     * remove token with given [tokenHash].
+     */
+    fun logout(tokenHash: String)
+
+    /**
+     * remove all user's tokens.
+     */
+    fun logoutAll(userId: Long)
+
+    fun setUserDeleted(userId: Long, deleted: Boolean)
 
     /**
      * @return list of updated records categories and records updates.
