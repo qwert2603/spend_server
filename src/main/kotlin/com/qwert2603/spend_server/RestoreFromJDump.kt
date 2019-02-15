@@ -28,8 +28,8 @@ fun main() {
         return
     }
 
-    val userId = 9L
-    val filename = "/home/alex/spend_dump/mother/dumps/spend mother 2019-02-15 18:00:01 8d12baae_9f74075e.json"
+    val userId = 0L
+    val filename = ""
     val fileReader = FileReader(filename)
     val json = fileReader.use { it.readText() }
     val jDump = Gson().fromJson(json, JDump::class.java)
