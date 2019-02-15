@@ -46,6 +46,12 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
                     """.trimIndent(),
                     args = listOf(tokenHash)
             )
+        } else {
+            // remove expired token.
+            remoteDB.execute(
+                    sql = "delete from tokens where token_hash = ?",
+                    args = listOf(tokenHash)
+            )
         }
 
         return userId
