@@ -10,26 +10,46 @@ import java.util.*
 
 class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
 
+    companion object {
+        private const val SQL_NOW = "now() at time zone 'utc'"
+    }
+
     private val recordsDbHelper = RecordsDbHelper(remoteDB)
 
     private fun createNewToken(): String = UUID.randomUUID().toString()
 
     @Synchronized
-    override fun getUserId(tokenHash: String): Long? = remoteDB
-            .query(
+    override fun getUserId(tokenHash: String): Long? {
+        val userId = remoteDB
+                .query(
+                        sql = """
+                            SELECT u.id
+                            FROM tokens t
+                                   left join users u on t.user_id = u.id
+                            WHERE token_hash = ?
+                              and expires > $SQL_NOW
+                              and u.deleted = FALSE
+                            LIMIT 1;
+                        """.trimIndent(),
+                        mapper = { it.getLong(1) },
+                        args = listOf(tokenHash)
+                )
+                .firstOrNull()
+
+        if (userId != null) {
+            remoteDB.execute(
                     sql = """
-                        SELECT u.id
-                        FROM tokens t
-                               left join users u on t.user_id = u.id
-                        WHERE token_hash = ?
-                          and expires > now()
-                          and u.deleted = FALSE
-                        LIMIT 1;
+                        update tokens
+                        set expires = $SQL_NOW + interval '${SpendServerConst.TOKEN_EXPIRES_DAYS} days',
+                            last_use = $SQL_NOW
+                        where token_hash = ?
                     """.trimIndent(),
-                    mapper = { it.getLong(1) },
                     args = listOf(tokenHash)
             )
-            .firstOrNull()
+        }
+
+        return userId
+    }
 
     @Synchronized
     override fun register(login: String, password: String): String? {
@@ -80,7 +100,7 @@ class RecordsRepoImpl(private val remoteDB: RemoteDB) : RecordsRepo {
         remoteDB.execute(
                 sql = """
                     insert into tokens(user_id, token_hash, expires, last_use)
-                    VALUES (?, ?, now() + interval '${SpendServerConst.TOKEN_EXPIRES_DAYS} days', now())
+                    VALUES (?, ?, $SQL_NOW + interval '${SpendServerConst.TOKEN_EXPIRES_DAYS} days', $SQL_NOW)
                 """.trimIndent(),
                 args = listOf(userId, token.hashWithSalt())
         )

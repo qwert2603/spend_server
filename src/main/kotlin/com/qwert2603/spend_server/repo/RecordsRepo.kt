@@ -9,6 +9,7 @@ import com.qwert2603.spend_server.entity.RecordsCount
 interface RecordsRepo {
 
     /**
+     * get user's id by token's hash and update token's expired / last_use fields.
      * @return user_id or null if
      * - token not found
      * - or token in expired
