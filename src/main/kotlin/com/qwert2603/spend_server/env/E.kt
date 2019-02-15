@@ -26,9 +26,3 @@ private object Prod : EnvInterface() {
     override val forTesting = false
     override var sudoUserId: Long? = 1
 }
-
-private object Mother : EnvInterface() {
-    override val dbName = "spend_mother"
-    override val port = 8361
-    override val forTesting = false
-}
