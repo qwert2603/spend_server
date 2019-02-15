@@ -27,7 +27,9 @@ create table users
 	id serial not null
 		constraint users_pk
 			primary key,
-	login varchar(64) not null
+	login varchar(64) not null,
+	deleted boolean default false not null,
+	password_hash varchar(64) not null
 );
 
 alter table users owner to postgres;
@@ -96,13 +98,15 @@ create table tokens
 	user_id integer not null
 		constraint tokens_users_id_fk
 			references users,
-	token varchar(64) not null
+	token_hash varchar(64) not null,
+	expires timestamp not null,
+	last_use timestamp not null
 );
 
 alter table tokens owner to postgres;
 
 create index tokens_token_hash_index
-	on tokens (token);
+	on tokens (token_hash);
 
 
 
