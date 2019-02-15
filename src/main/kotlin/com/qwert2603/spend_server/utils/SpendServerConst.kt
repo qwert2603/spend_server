@@ -8,6 +8,8 @@ object SpendServerConst {
     const val MAX_TYPE_LENGTH = 64
     const val MAX_CATEGORY_NAME_LENGTH = 64
     const val MAX_RECORD_KIND_LENGTH = 64
+    const val MAX_LOGIN_LENGTH = 64
+    const val MAX_PASSWORD_LENGTH = 64
 
     const val RECORD_TYPE_ID_SPEND = 1L
     const val RECORD_TYPE_ID_PROFIT = 2L
