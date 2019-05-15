@@ -12,12 +12,20 @@ abstract class EnvInterface {
     open var sudoUserId: Long? = null
 }
 
-private object Test : EnvInterface() {
-    override val dbName = "test_spend"
+private object Debug : EnvInterface() {
+    override val dbName = "spend_debug"
     override val port = 8359
     override val forTesting = true
-//    override var salt: String? = "salt"
+    override var salt: String? = "salt"
     override var sudoUserId: Long? = 7
+}
+
+private object Test : EnvInterface() {
+    override val dbName = "spend_test"
+    override val port = 8359
+    override val forTesting = true
+    override var salt: String? = "salt"
+    override var sudoUserId: Long? = 1
 }
 
 private object Prod : EnvInterface() {

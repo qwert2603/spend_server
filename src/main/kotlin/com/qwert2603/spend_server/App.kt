@@ -1,19 +1,17 @@
 package com.qwert2603.spend_server
 
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.qwert2603.spend_server.db.RemoteDBImpl
 import com.qwert2603.spend_server.entity.BriefInfo
 import com.qwert2603.spend_server.entity.LoginParams
 import com.qwert2603.spend_server.entity.RegisterParams
 import com.qwert2603.spend_server.entity.SaveRecordsParam
 import com.qwert2603.spend_server.env.E
-import com.qwert2603.spend_server.repo.RecordsRepo
-import com.qwert2603.spend_server.repo_impl.RecordsRepoImpl
 import com.qwert2603.spend_server.utils.*
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.StatusPages
 import io.ktor.http.HttpStatusCode
@@ -25,7 +23,8 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
 fun Route.api_v2_0() {
-    val recordsRepo: RecordsRepo = RecordsRepoImpl(RemoteDBImpl())
+
+    val recordsRepo = DiHolder.recordsRepo
 
     fun ApplicationCall.getHashedToken(): String = this
             .request
@@ -133,8 +132,11 @@ fun Route.api_v2_0() {
     }
 }
 
+const val ROUTE_PATH = "api/v2.0"
+
 fun Application.module() {
 
+    install(CallLogging)
     install(StatusPages) {
         exception<NoTokenException> { call.respond(HttpStatusCode.BadRequest, "no token") }
         exception<UserNotFoundException> { call.respond(HttpStatusCode.Unauthorized, "unauthorized") }
@@ -155,11 +157,15 @@ fun Application.module() {
         jackson {}
     }
     routing {
-        route("api/v2.0/", Route::api_v2_0)
+        route("$ROUTE_PATH/", Route::api_v2_0)
     }
 }
 
-fun main(args: Array<String>) {
+fun startServer(args: Array<String>) {
+    if (isServerRunning()) {
+        LogUtils.e("server is running!")
+        return
+    }
 
     if (E.env.salt == null) {
         if (args.isEmpty()) {
@@ -174,4 +180,8 @@ fun main(args: Array<String>) {
             port = E.env.port,
             module = Application::module
     ).start()
+}
+
+fun main(args: Array<String>) {
+    startServer(args)
 }

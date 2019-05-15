@@ -70,3 +70,16 @@ fun String.hashWithSalt(): String {
     }
     return result
 }
+
+
+@Suppress("UNCHECKED_CAST")
+fun <T> List<T>.sortedByMany(selectors: List<(T) -> Any>): List<T> = this
+        .sortedWith(Comparator { t1, t2 ->
+            for (selector in selectors) {
+                val compare = compareBy(selector as ((T) -> Comparable<Any>)).compare(t1, t2)
+                if (compare != 0) {
+                    return@Comparator compare
+                }
+            }
+            return@Comparator 0
+        })
