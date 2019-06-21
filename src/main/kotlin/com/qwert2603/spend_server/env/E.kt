@@ -1,7 +1,7 @@
 package com.qwert2603.spend_server.env
 
 object E {
-    val env: EnvInterface = Test
+    val env: EnvInterface = Debug
 }
 
 abstract class EnvInterface {
@@ -17,7 +17,7 @@ private object Debug : EnvInterface() {
     override val port = 8359
     override val forTesting = true
     override var salt: String? = "salt"
-    override var sudoUserId: Long? = 7
+    override var sudoUserId: Long? = 1
 }
 
 private object Test : EnvInterface() {
